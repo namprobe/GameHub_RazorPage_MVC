@@ -1,0 +1,56 @@
+﻿@page "/Login"
+@model GameHub.WebApp.Pages.LoginModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-center">GameHub Login</h4>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @Model.ErrorMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                {
+                    <div class="alert alert-success" role="alert">
+                        @Model.SuccessMessage
+                    </div>
+                }
+
+                <form method="post">
+                    <div class="mb-3">
+                        <label asp-for="LoginRequest.Email" class="form-label">Email</label>
+                        <input asp-for="LoginRequest.Email" class="form-control" type="email" placeholder="Enter your email" />
+                        <span asp-validation-for="LoginRequest.Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="LoginRequest.Password" class="form-label">Password</label>
+                        <input asp-for="LoginRequest.Password" class="form-control" type="password" placeholder="Enter your password" />
+                        <span asp-validation-for="LoginRequest.Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-muted text-center">
+                <small>Enter GameHub world now!</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

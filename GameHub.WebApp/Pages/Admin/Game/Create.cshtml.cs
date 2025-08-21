@@ -1,0 +1,74 @@
+﻿using GameHub.BLL.DTOs.Game;
+using GameHub.BLL.Helpers;
+using GameHub.BLL.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
+namespace GameHub.WebApp.Pages.Admin.Game
+{
+    public class CreateModel : AdminBasePageModel
+    {
+        private readonly IGameService _gameService;
+        private readonly IGameCategoryService _gameCategoryService;
+        private readonly IDeveloperService _developerService;
+
+        public CreateModel(IGameService gameService, IGameCategoryService gameCategoryService, 
+                          IDeveloperService developerService, CurrentUserHelper currentUserHelper) 
+            : base(currentUserHelper)
+        {
+            _gameService = gameService;
+            _gameCategoryService = gameCategoryService;
+            _developerService = developerService;
+        }
+
+        [BindProperty]
+        public GameRequest GameRequest { get; set; } = new();
+
+        public async Task<IActionResult> OnGetAsync()
+        {
+            var authResult = await ValidateAdminAccessAsync();
+            if (authResult != null) return authResult;
+
+            await LoadSelectListsAsync();
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostAsync()
+        {
+            var authResult = await ValidateAdminAccessAsync();
+            if (authResult != null) return authResult;
+
+            if (!ModelState.IsValid)
+            {
+                await LoadSelectListsAsync();
+                return Page();
+            }
+
+            var result = await _gameService.CreateAsync(GameRequest);
+            
+            if (result.IsSuccess)
+            {
+                SetSuccessMessage("Game created successfully!");
+                return RedirectToPage("./Index");
+            }
+            
+            SetErrorMessage(result.Message ?? "Failed to create game");
+            await LoadSelectListsAsync();
+            return Page();
+        }
+
+        private async Task LoadSelectListsAsync()
+        {
+            var categoriesResult = await _gameCategoryService.GetAllAsync();
+            var developersResult = await _developerService.GetAllAsync();
+
+            ViewData["CategoryId"] = categoriesResult.IsSuccess 
+                ? new SelectList(categoriesResult.Data, "Id", "CategoryName")
+                : new SelectList(new List<object>());
+
+            ViewData["DeveloperId"] = developersResult.IsSuccess 
+                ? new SelectList(developersResult.Data, "Id", "DeveloperName")
+                : new SelectList(new List<object>());
+        }
+    }
+}

@@ -1,0 +1,145 @@
+﻿@page "/Admin/Developer/Index"
+@model GameHub.WebApp.Pages.Admin.Developer.IndexModel
+
+@{
+    ViewData["Title"] = "Developers Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Developers Management</h1>
+    <a asp-page="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Create New Developer
+    </a>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Filter.DeveloperName" class="form-label">Developer Name</label>
+                <input asp-for="Filter.DeveloperName" class="form-control" placeholder="Search by developer name..." />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Filter.PageSize" class="form-label">Page Size</label>
+                <select asp-for="Filter.PageSize" class="form-select">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+            <div class="col-md-5 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-secondary me-2">Search</button>
+                <a asp-page="/Admin/Developer/Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Developers.IsSuccess)
+{
+    <!-- Results Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Developers List (@Model.Developers.TotalItems items)</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Developers.Items?.Any() == true)
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Developer Name</th>
+                                <th>Website</th>
+                                <th>Country</th>
+                                <th>Status</th>
+                                <th>Created Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var developer in Model.Developers.Items)
+                            {
+                                <tr>
+                                    <td><strong>@developer.DeveloperName</strong></td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(developer.Website))
+                                        {
+                                            <a href="@developer.Website" target="_blank" class="text-decoration-none">
+                                                @developer.Website
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No website</span>
+                                        }
+                                    </td>
+                                    <td>-</td>
+                                    <td>
+                                        <span class="badge @(developer.IsActive ? "bg-success" : "bg-secondary")">
+                                            @(developer.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td>-</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-page="./Details" asp-route-id="@developer.Id" class="btn btn-sm btn-outline-info">View</a>
+                                            <a asp-page="./Edit" asp-route-id="@developer.Id" class="btn btn-sm btn-outline-warning">Edit</a>
+                                            <a asp-page="./Delete" asp-route-id="@developer.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.Developers.TotalPages > 1)
+                {
+                    <nav aria-label="Developers pagination">
+                        <ul class="pagination justify-content-center mt-3">
+                            @if (Model.Developers.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" asp-page="/Admin/Developer/Index" asp-route-Filter.Page="@(Model.Developers.CurrentPage - 1)" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.DeveloperName="@Model.Filter.DeveloperName">Previous</a>
+                                </li>
+                            }
+
+                            @for (int i = Math.Max(1, Model.Developers.CurrentPage - 2); i <= Math.Min(Model.Developers.TotalPages, Model.Developers.CurrentPage + 2); i++)
+                            {
+                                <li class="page-item @(i == Model.Developers.CurrentPage ? "active" : "")">
+                                    <a class="page-link" asp-page="/Admin/Developer/Index" asp-route-Filter.Page="@i" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.DeveloperName="@Model.Filter.DeveloperName">@i</a>
+                                </li>
+                            }
+
+                            @if (Model.Developers.CurrentPage < Model.Developers.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" asp-page="/Admin/Developer/Index" asp-route-Filter.Page="@(Model.Developers.CurrentPage + 1)" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.DeveloperName="@Model.Filter.DeveloperName">Next</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <div class="text-center py-4">
+                    <p class="text-muted">No developers found.</p>
+                    <a asp-page="Create" class="btn btn-primary">Create First Developer</a>
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger">
+        <h4>Error Loading Developers</h4>
+        <p>@Model.Developers.Message</p>
+    </div>
+}

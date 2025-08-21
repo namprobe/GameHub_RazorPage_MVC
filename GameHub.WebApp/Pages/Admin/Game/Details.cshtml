@@ -1,0 +1,81 @@
+﻿@page "/Admin/Game/Details/{id:int}"
+@model GameHub.WebApp.Pages.Admin.Game.DetailsModel
+
+@{
+    ViewData["Title"] = "Game Details";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+        <h1 class="me-3">Game Details</h1>
+        <div class="connection-status">
+            <span class="badge bg-secondary">⚫ Connecting...</span>
+        </div>
+    </div>
+    <div>
+        <a asp-page="./Edit" asp-route-id="@Model.Game.Id" class="btn btn-outline-warning">Edit</a>
+        <a asp-page="./Index" class="btn btn-outline-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="card game-details-container">
+    <div class="card-header">
+        <h4 class="mb-0">@Model.Game.Title</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Title:</dt>
+                    <dd class="col-sm-8">@Model.Game.Title</dd>
+                    
+                    <dt class="col-sm-4">Price:</dt>
+                    <dd class="col-sm-8">$@Model.Game.Price.ToString("F2")</dd>
+                    
+                    <dt class="col-sm-4">Release Date:</dt>
+                    <dd class="col-sm-8">@(Model.Game.ReleaseDate?.ToString("yyyy-MM-dd") ?? "Not set")</dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Category:</dt>
+                    <dd class="col-sm-8">@(Model.Game.Category?.CategoryName ?? "No Category")</dd>
+                    
+                    <dt class="col-sm-4">Developer:</dt>
+                    <dd class="col-sm-8">@(Model.Game.Developer?.DeveloperName ?? "No Developer")</dd>
+                    
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(Model.Game.IsActive ? "bg-success" : "bg-secondary")">
+                            @(Model.Game.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Registered Players:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-info fs-6">
+                            <i class="fas fa-users me-1"></i>
+                            @Model.Game.PlayerCount players
+                        </span>
+                    </dd>
+
+                    <dt class="col-sm-4">Created At:</dt>
+                    <dd class="col-sm-8">@(Model.Game.CreatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "N/A")</dd>
+
+                    <dt class="col-sm-4">Created By:</dt>
+                    <dd class="col-sm-8">@(Model.Game.CreatedBy?.ToString() ?? "N/A")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="d-flex justify-content-between">
+            <a asp-page="./Delete" asp-route-id="@Model.Game.Id" class="btn btn-danger">Delete Game</a>
+            <div>
+                <a asp-page="./Edit" asp-route-id="@Model.Game.Id" class="btn btn-warning me-2">Edit Game</a>
+                <a asp-page="./Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+</div>

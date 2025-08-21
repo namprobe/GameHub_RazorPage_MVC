@@ -1,0 +1,70 @@
+﻿@page "/Admin/Game/Delete/{id:int}"
+@model GameHub.WebApp.Pages.Admin.Game.DeleteModel
+
+@{
+    ViewData["Title"] = "Delete Game";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Delete Game</h1>
+    <a asp-page="./Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="alert alert-warning">
+    <h4 class="alert-heading">⚠️ Confirm Deletion</h4>
+    <p>Are you sure you want to delete this game? This action cannot be undone.</p>
+</div>
+
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h4 class="mb-0">Game to Delete: @Model.Game.Title</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Title:</dt>
+                    <dd class="col-sm-8"><strong>@Model.Game.Title</strong></dd>
+                    
+                    <dt class="col-sm-4">Price:</dt>
+                    <dd class="col-sm-8">$@Model.Game.Price.ToString("F2")</dd>
+                    
+                    <dt class="col-sm-4">Release Date:</dt>
+                    <dd class="col-sm-8">@(Model.Game.ReleaseDate?.ToString("yyyy-MM-dd") ?? "Not set")</dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Category:</dt>
+                    <dd class="col-sm-8">@(Model.Game.Category?.CategoryName ?? "No Category")</dd>
+                    
+                    <dt class="col-sm-4">Developer:</dt>
+                    <dd class="col-sm-8">@(Model.Game.Developer?.DeveloperName ?? "No Developer")</dd>
+                    
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(Model.Game.IsActive ? "bg-success" : "bg-secondary")">
+                            @(Model.Game.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Game ID:</dt>
+                    <dd class="col-sm-8">#@Model.Game.Id</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <form method="post" class="d-inline">
+            <div class="d-flex justify-content-between">
+                <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+                <div>
+                    <a asp-page="./Details" asp-route-id="@Model.Game.Id" class="btn btn-outline-info me-2">View Details</a>
+                    <input type="submit" value="Delete Game" class="btn btn-danger" 
+                           onclick="return confirm('Are you absolutely sure you want to delete this game?')" />
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

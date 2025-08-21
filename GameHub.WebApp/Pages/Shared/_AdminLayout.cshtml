@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - GameHub Admin</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/GameHub.WebApp.styles.css" asp-append-version="true" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- SignalR Client CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-page="/Admin/Game/Index">GameHub Admin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-page="/Admin/Game/Index">Games</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-page="/Admin/GameCategory/Index">Categories</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-page="/Admin/Developer/Index">Developers</a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <form method="post" asp-page="/Logout" class="d-inline">
+                                <button type="submit" class="btn btn-outline-light">Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container-fluid">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted bg-light mt-5">
+        <div class="container">
+            &copy; 2025 - GameHub Admin - Game Management System
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <!-- SignalR Game Real-time Updates -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🚀 Initializing SignalR...");
+            
+            if (typeof signalR === 'undefined') {
+                console.error("❌ SignalR library not loaded!");
+                // Update connection status to show error
+                const statusElements = document.querySelectorAll('.connection-status');
+                statusElements.forEach(el => {
+                    el.innerHTML = '<span class="badge bg-danger">❌ SignalR Missing</span>';
+                });
+                return;
+            }
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/gameHub")
+                .withAutomaticReconnect()
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
+
+            // Connection events
+            connection.start().then(function () {
+                console.log("✅ SignalR connected to /gameHub");
+                // Update connection status
+                const statusElements = document.querySelectorAll('.connection-status');
+                statusElements.forEach(el => {
+                    el.innerHTML = '<span class="badge bg-success">🟢 Live</span>';
+                });
+            }).catch(function (err) {
+                console.error("❌ SignalR connection failed:", err);
+                // Update connection status  
+                const statusElements = document.querySelectorAll('.connection-status');
+                statusElements.forEach(el => {
+                    el.innerHTML = '<span class="badge bg-danger">🔴 Failed</span>';
+                });
+            });
+
+            // Reconnection events
+            connection.onreconnected(function () {
+                console.log("🔄 SignalR reconnected");
+                const statusElements = document.querySelectorAll('.connection-status');
+                statusElements.forEach(el => {
+                    el.innerHTML = '<span class="badge bg-success">🟢 Live</span>';
+                });
+            });
+
+            connection.onclose(function () {
+                console.log("🔌 SignalR connection closed");
+                const statusElements = document.querySelectorAll('.connection-status');
+                statusElements.forEach(el => {
+                    el.innerHTML = '<span class="badge bg-warning">⚫ Offline</span>';
+                });
+            });
+
+            // Handle game updates
+            connection.on("GameUpdated", function (gameId) {
+                console.log("🎮 Game updated:", gameId);
+                console.log("📍 Current pathname:", window.location.pathname);
+                console.log("🔍 Pathname includes /Admin/Game?", window.location.pathname.includes('/Admin/Game'));
+                
+                if (window.location.pathname.includes('/Admin/Game')) {
+                    console.log("✅ Path matches, showing notification...");
+                    // Show notification
+                    showUpdateNotification('Game updated successfully!');
+                    // Reload page after short delay
+                    console.log("⏰ Setting timeout for reload...");
+                    setTimeout(function() { 
+                        console.log("🔄 Reloading page for game update...");
+                        location.reload(); 
+                    }, 1500);
+                } else {
+                    console.log("❌ Path doesn't match, no reload");
+                }
+            });
+
+            // Handle game deletions  
+            connection.on("GameDeleted", function (gameId) {
+                console.log("🗑️ Game deleted:", gameId);
+                if (window.location.pathname.includes('/Admin/Game')) {
+                    // Show notification
+                    showUpdateNotification('Game deleted!', 'warning');
+                    // Reload page after short delay
+                    setTimeout(function() { 
+                        console.log("🔄 Reloading page for game deletion...");
+                        location.reload(); 
+                    }, 1500);
+                }
+            });
+
+            // Helper function to show notifications
+            function showUpdateNotification(message, type = 'success') {
+                const alertClass = type === 'success' ? 'alert-success' : 'alert-warning';
+                const alertHtml = `
+                    <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+                         style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+                        <strong>Real-time Update:</strong> ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                
+                // Remove existing notifications
+                document.querySelectorAll('.alert.position-fixed').forEach(el => el.remove());
+                
+                // Add new notification
+                document.body.insertAdjacentHTML('beforeend', alertHtml);
+                
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    document.querySelectorAll('.alert.position-fixed').forEach(el => el.remove());
+                }, 3000);
+            }
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

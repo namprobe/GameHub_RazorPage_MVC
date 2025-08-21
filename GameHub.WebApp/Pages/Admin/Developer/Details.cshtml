@@ -1,0 +1,67 @@
+﻿@page "/Admin/Developer/Details/{id:int}"
+@model GameHub.WebApp.Pages.Admin.Developer.DetailsModel
+
+@{
+    ViewData["Title"] = "Developer Details";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Developer Details</h1>
+    <div>
+        <a asp-page="./Edit" asp-route-id="@Model.Developer.Id" class="btn btn-outline-warning">Edit</a>
+        <a asp-page="./Index" class="btn btn-outline-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0">@Model.Developer.DeveloperName</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Name:</dt>
+                    <dd class="col-sm-8">@Model.Developer.DeveloperName</dd>
+                    
+                    <dt class="col-sm-4">Website:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.Developer.Website))
+                        {
+                            <a href="@Model.Developer.Website" target="_blank" class="text-decoration-none">
+                                @Model.Developer.Website
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No website</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(Model.Developer.IsActive ? "bg-success" : "bg-secondary")">
+                            @(Model.Developer.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Developer ID:</dt>
+                    <dd class="col-sm-8">#@Model.Developer.Id</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="d-flex justify-content-between">
+            <a asp-page="./Delete" asp-route-id="@Model.Developer.Id" class="btn btn-danger">Delete Developer</a>
+            <div>
+                <a asp-page="./Edit" asp-route-id="@Model.Developer.Id" class="btn btn-warning me-2">Edit Developer</a>
+                <a asp-page="./Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+</div>

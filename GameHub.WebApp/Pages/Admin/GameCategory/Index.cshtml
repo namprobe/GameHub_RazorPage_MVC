@@ -1,0 +1,132 @@
+﻿@page "/Admin/GameCategory/Index"
+@model GameHub.WebApp.Pages.Admin.GameCategory.IndexModel
+
+@{
+    ViewData["Title"] = "Game Categories Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Game Categories Management</h1>
+    <a asp-page="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Create New Category
+    </a>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Filter.CategoryName" class="form-label">Category Name</label>
+                <input asp-for="Filter.CategoryName" class="form-control" placeholder="Search by category name..." />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Filter.PageSize" class="form-label">Page Size</label>
+                <select asp-for="Filter.PageSize" class="form-select">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+            <div class="col-md-5 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-secondary me-2">Search</button>
+                <a asp-page="/Admin/GameCategory/Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.GameCategories.IsSuccess)
+{
+    <!-- Results Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Categories List (@Model.GameCategories.TotalItems items)</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.GameCategories.Items?.Any() == true)
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Category Name</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Created Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var category in Model.GameCategories.Items)
+                            {
+                                <tr>
+                                    <td><strong>@category.CategoryName</strong></td>
+                                    <td>@(category.Description ?? "No description")</td>
+                                    <td>
+                                        <span class="badge @(category.IsActive ? "bg-success" : "bg-secondary")">
+                                            @(category.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td>-</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-page="./Details" asp-route-id="@category.Id" class="btn btn-sm btn-outline-info">View</a>
+                                            <a asp-page="./Edit" asp-route-id="@category.Id" class="btn btn-sm btn-outline-warning">Edit</a>
+                                            <a asp-page="./Delete" asp-route-id="@category.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.GameCategories.TotalPages > 1)
+                {
+                    <nav aria-label="Categories pagination">
+                        <ul class="pagination justify-content-center mt-3">
+                            @if (Model.GameCategories.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" asp-page="/Admin/GameCategory/Index" asp-route-Filter.Page="@(Model.GameCategories.CurrentPage - 1)" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.CategoryName="@Model.Filter.CategoryName">Previous</a>
+                                </li>
+                            }
+
+                            @for (int i = Math.Max(1, Model.GameCategories.CurrentPage - 2); i <= Math.Min(Model.GameCategories.TotalPages, Model.GameCategories.CurrentPage + 2); i++)
+                            {
+                                <li class="page-item @(i == Model.GameCategories.CurrentPage ? "active" : "")">
+                                    <a class="page-link" asp-page="/Admin/GameCategory/Index" asp-route-Filter.Page="@i" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.CategoryName="@Model.Filter.CategoryName">@i</a>
+                                </li>
+                            }
+
+                            @if (Model.GameCategories.CurrentPage < Model.GameCategories.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" asp-page="/Admin/GameCategory/Index" asp-route-Filter.Page="@(Model.GameCategories.CurrentPage + 1)" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.CategoryName="@Model.Filter.CategoryName">Next</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <div class="text-center py-4">
+                    <p class="text-muted">No categories found.</p>
+                    <a asp-page="Create" class="btn btn-primary">Create First Category</a>
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger">
+        <h4>Error Loading Categories</h4>
+        <p>@Model.GameCategories.Message</p>
+    </div>
+}
