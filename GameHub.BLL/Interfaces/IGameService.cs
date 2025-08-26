@@ -10,4 +10,5 @@ public interface IGameService
     Task<Result> UpdateAsync(int id, GameRequest request);
     Task<Result> DeleteAsync(int id);
     Task<PaginationResult<GameResponse>> GetPagedAsync(GameFilter filter);
+    Task<Result> IncrementRegistrationCountAsync(int gameId);
 }

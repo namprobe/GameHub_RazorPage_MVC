@@ -51,7 +51,8 @@ namespace GameHub.WebApp.Pages.Admin.Game
                 Price = game.Price,
                 ReleaseDate = game.ReleaseDate,
                 CategoryId = game.Category?.Id ?? 0,
-                DeveloperId = game.Developer?.Id ?? 0
+                DeveloperId = game.Developer?.Id ?? 0,
+                Description = game.Description
             };
             Id = game.Id;
 

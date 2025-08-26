@@ -4,4 +4,5 @@ public class LoginResponse
     public string AccessToken { get; set; } = string.Empty;
     public DateTime ExpiresAt { get; set; }
     public string? Role { get; set; }
+    public string? AvatarPath { get; set; }
 }

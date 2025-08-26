@@ -1,0 +1,93 @@
+@page "/Player/Profile"
+@model GameHub.WebApp.Pages.Player.ProfileModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
+
+@{
+    ViewData["Title"] = "Your Profile";
+    Layout = "_Layout";
+    string baseUrl = Config["BaseUrl"] ?? string.Empty;
+}
+
+<style>
+    .profile-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 0; margin-bottom: 30px; }
+    .profile-title { font-size: 2rem; font-weight: 700; }
+    .profile-card { background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 1px solid #f8f9fa; }
+    .avatar-preview { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:3rem; overflow:hidden; }
+    .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+</style>
+
+<section class="profile-header">
+    <div class="container">
+        <h1 class="profile-title"><i class="fas fa-user-circle me-2"></i>Your Profile</h1>
+    </div>
+</section>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card profile-card p-4">
+                <form method="post" enctype="multipart/form-data">
+                    <div class="d-flex align-items-center mb-4 gap-3">
+                        <div class="avatar-preview" id="avatarPreview">
+                            @if (!string.IsNullOrEmpty(Model.Profile?.AvatarPath))
+                            {
+                                var avatar = Model.Profile.AvatarPath;
+                                var imgSrc = avatar.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                                    ? avatar
+                                    : ($"{(string.IsNullOrEmpty(baseUrl) ? string.Empty : baseUrl.TrimEnd('/'))}/{avatar.TrimStart('/')}");
+                                <img src="@imgSrc" alt="Avatar" />
+                            }
+                            else
+                            {
+                                <span><i class="fas fa-user"></i></span>
+                            }
+                        </div>
+                        <div>
+                            <div class="mb-2">
+                                <label class="form-label fw-semibold">Change avatar</label>
+                                <input asp-for="Form.Avatar" class="form-control" accept="image/*" />
+                            </div>
+                            <small class="text-muted">Allowed: jpg, jpeg, png, gif, webp. Max 10MB.</small>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input class="form-control" value="@Model.Profile?.Email" disabled />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.Username" class="form-label">Username</label>
+                            <input asp-for="Form.Username" class="form-control" />
+                            <span asp-validation-for="Form.Username" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-between">
+                        <a asp-page="/Player/Index" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Back</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const input = document.getElementById('Form_Avatar');
+        const preview = document.getElementById('avatarPreview');
+        if (input) {
+            input.addEventListener('change', function (e) {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function (ev) {
+                    preview.innerHTML = `<img src="${ev.target.result}" alt="Avatar" />`;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    </script>
+}

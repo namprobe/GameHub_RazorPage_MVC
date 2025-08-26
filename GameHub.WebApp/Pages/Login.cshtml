@@ -12,19 +12,6 @@
                 <h4 class="text-center">GameHub Login</h4>
             </div>
             <div class="card-body">
-                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-                {
-                    <div class="alert alert-danger" role="alert">
-                        @Model.ErrorMessage
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(Model.SuccessMessage))
-                {
-                    <div class="alert alert-success" role="alert">
-                        @Model.SuccessMessage
-                    </div>
-                }
 
                 <form method="post">
                     <div class="mb-3">
@@ -46,6 +33,10 @@
             </div>
             <div class="card-footer text-muted text-center">
                 <small>Enter GameHub world now!</small>
+                <div class="mt-3">
+                    <span>Don't have an account? </span>
+                    <a asp-page="/Register" class="text-decoration-none fw-bold">Sign Up</a>
+                </div>
             </div>
         </div>
     </div>

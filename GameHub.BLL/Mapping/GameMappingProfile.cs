@@ -17,6 +17,7 @@ public class GameMappingProfile : Profile
         CreateMap<GameRequest, Game>()
             .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
             .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.ImagePath, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
@@ -24,6 +25,7 @@ public class GameMappingProfile : Profile
             .ForMember(dest => dest.Category, opt => opt.Ignore())
             .ForMember(dest => dest.Developer, opt => opt.Ignore())
             .ForMember(dest => dest.GameRegistrationDetails, opt => opt.Ignore())
-            .ForMember(dest => dest.CartItems, opt => opt.Ignore());
+            .ForMember(dest => dest.CartItems, opt => opt.Ignore())
+            .ForMember(dest => dest.RegistrationCount, opt => opt.Ignore());
     }
 }

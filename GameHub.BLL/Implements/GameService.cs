@@ -21,8 +21,9 @@ public class GameService : IGameService
     private readonly GameQueryBuilder _gameQueryBuilder;
     private readonly IMapper _mapper;
     private readonly IHubContext<GameHub.BLL.Hubs.GameHub> _hubContext;
+    private readonly FileUploadHelper _fileUploadHelper;
 
-    public GameService(IUnitOfWork unitOfWork, ILogger<GameService> logger, CurrentUserHelper currentUserHelper, IMapper mapper, GameQueryBuilder gameQueryBuilder, IHubContext<GameHub.BLL.Hubs.GameHub> hubContext)
+    public GameService(IUnitOfWork unitOfWork, ILogger<GameService> logger, CurrentUserHelper currentUserHelper, IMapper mapper, GameQueryBuilder gameQueryBuilder, IHubContext<GameHub.BLL.Hubs.GameHub> hubContext, FileUploadHelper fileUploadHelper)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -30,6 +31,7 @@ public class GameService : IGameService
         _mapper = mapper;
         _gameQueryBuilder = gameQueryBuilder;
         _hubContext = hubContext;
+        _fileUploadHelper = fileUploadHelper;
     }
 
     public async Task<Result> CreateAsync(GameRequest request)
@@ -46,6 +48,14 @@ public class GameService : IGameService
             {
                 await _unitOfWork.BeginTransactionAsync();
                 var game = _mapper.Map<Game>(request);
+                
+                // Handle image upload
+                if (request.Image != null)
+                {
+                    var imagePath = await _fileUploadHelper.UploadFileAsync(request.Image, "games");
+                    game.ImagePath = imagePath;
+                }
+                
                 game.InitializeAudit(currentUserId);
                 await _unitOfWork.GameRepository.AddAsync(game);
                 await _unitOfWork.CommitTransactionAsync();
@@ -84,6 +94,9 @@ public class GameService : IGameService
                 return Result.Error("Game is associated with valid game registrations");
             }
 
+            // Store image path for deletion
+            var imagePath = game.ImagePath;
+            
             try
             {
                 await _unitOfWork.BeginTransactionAsync();
@@ -95,6 +108,24 @@ public class GameService : IGameService
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
+            
+            // Delete image file asynchronously AFTER transaction is committed
+            if (!string.IsNullOrEmpty(imagePath))
+            {
+                _ = Task.Run(() =>
+                {
+                    try
+                    {
+                        _fileUploadHelper.DeleteFile(imagePath);
+                        _logger.LogInformation("Game image deleted: {ImagePath}", imagePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to delete game image: {ImagePath}", imagePath);
+                    }
+                });
+            }
+            
             await _hubContext.Clients.All.SendAsync("GameDeleted", game.Id);
             return Result.Success("Delete Game successfully");
         }
@@ -119,13 +150,7 @@ public class GameService : IGameService
                 return Result<GameResponse>.Error("Game not found");
             }
 
-            // Calculate player registration count
-            var playerCount = await _unitOfWork.GameRegistrationRepository
-                .CountAsync(x => x.GameRegistrationDetails.Any(gd => gd.GameId == id) && x.IsActive);
-
             var gameResponse = _mapper.Map<GameResponse>(game);
-            gameResponse.PlayerCount = playerCount;
-
             return Result<GameResponse>.Success(gameResponse);
         }
         catch (Exception ex)
@@ -156,14 +181,6 @@ public class GameService : IGameService
             );
             
             var mappedGames = _mapper.Map<List<GameResponse>>(games.ToList());
-            
-            // Calculate player count for each game
-            foreach (var game in mappedGames)
-            {
-                game.PlayerCount = await _unitOfWork.GameRegistrationRepository
-                    .CountAsync(x => x.GameRegistrationDetails.Any(gd => gd.GameId == game.Id) && x.IsActive);
-            }
-            
             return PaginationResult<GameResponse>.Success(
                 mappedGames, 
                 filter.Page, 
@@ -194,9 +211,26 @@ public class GameService : IGameService
             }
             var currentUserId = _currentUserHelper.GetCurrentUserId();
             var gameToUpdate = _mapper.Map<Game>(request);
+            
+            // Store old image path for deletion
+            var oldImagePath = oldGame.ImagePath;
+            
             try
             {
                 await _unitOfWork.BeginTransactionAsync();
+                
+                // Handle image upload
+                if (request.Image != null)
+                {
+                    var imagePath = await _fileUploadHelper.UploadFileAsync(request.Image, "games");
+                    gameToUpdate.ImagePath = imagePath;
+                }
+                else
+                {
+                    // Keep existing image path if no new image uploaded
+                    gameToUpdate.ImagePath = oldGame.ImagePath;
+                }
+                
                 gameToUpdate.Id = id;
                 gameToUpdate.UpdateAudit(currentUserId, oldGame);
                 _unitOfWork.GameRepository.Update(gameToUpdate);
@@ -207,6 +241,23 @@ public class GameService : IGameService
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
+            
+            // Delete old image asynchronously AFTER transaction is committed
+            if (request.Image != null && !string.IsNullOrEmpty(oldImagePath))
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        _fileUploadHelper.DeleteFile(oldImagePath);
+                        _logger.LogInformation("Old game image deleted: {ImagePath}", oldImagePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to delete old game image: {ImagePath}", oldImagePath);
+                    }
+                });
+            }
             await _hubContext.Clients.All.SendAsync("GameUpdated", gameToUpdate.Id);
             _logger.LogInformation("Game updated successfully by user {UserId}", currentUserId);
             return Result.Success("Update Game successfully");
@@ -215,6 +266,44 @@ public class GameService : IGameService
         {
             _logger.LogError(ex, "An error occurred while updating Game");
             return Result.Error("Update Game failed");
+        }
+    }
+
+    /// <summary>
+    /// Increment the registration count for a game when a new player registers
+    /// </summary>
+    /// <param name="gameId">The ID of the game</param>
+    /// <returns>Success result</returns>
+    public async Task<Result> IncrementRegistrationCountAsync(int gameId)
+    {
+        try
+        {
+            var game = await _unitOfWork.GameRepository.GetFirstOrDefaultAsync(x => x.Id == gameId);
+            if (game == null)
+            {
+                return Result.Error("Game not found");
+            }
+
+            try
+            {
+                await _unitOfWork.BeginTransactionAsync();
+                game.RegistrationCount++;
+                _unitOfWork.GameRepository.Update(game);
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
+            _logger.LogInformation("Registration count incremented for game {GameId}. New count: {Count}", gameId, game.RegistrationCount);
+            return Result.Success("Registration count incremented successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while incrementing registration count for game {GameId}", gameId);
+            return Result.Error("Failed to increment registration count");
         }
     }
 }

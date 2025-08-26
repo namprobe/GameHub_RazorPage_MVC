@@ -6,30 +6,144 @@
     <title>@ViewData["Title"] - GameHub.WebApp</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/toast.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/GameHub.WebApp.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        /* Enhanced Navigation */
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 0 2px;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .navbar-toggler { border: none; color: white; }
+        .navbar-toggler:focus { box-shadow: none; }
+
+        /* Avatar */
+        .nav-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+
+        /* Enhanced Footer */
+        .footer { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 0; margin-top: 50px; }
+        .footer a { color: rgba(255, 255, 255, 0.8); text-decoration: none; }
+        .footer a:hover { color: white; }
+    </style>
 </head>
+@inject GameHub.BLL.Helpers.CurrentUserHelper CurrentUser
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">GameHub.WebApp</a>
+                @if (CurrentUser.IsLoggedIn())
+                {
+                    <a class="navbar-brand" asp-area="" asp-page="/Player/Index"><i class="fas fa-gamepad me-2"></i>GameHub</a>
+                }
+                else
+                {
+                    <a class="navbar-brand" asp-area="" asp-page="/Index"><i class="fas fa-gamepad me-2"></i>GameHub</a>
+                }
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
+                        @if (CurrentUser.IsLoggedIn())
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Player/Index">Home</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
                         </li>
+                        @if (CurrentUser.IsLoggedIn())
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Player/Games" asp-route-Filter.SortBy="CreatedAt" asp-route-Filter.IsAscending="false">Latest Games</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Player/Games" asp-route-Filter.SortBy="Price" asp-route-Filter.IsAscending="true">Best Prices</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Player/Games">All Games</a>
+                            </li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav">
+                        @if (!CurrentUser.IsLoggedIn())
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Login">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Register">Register</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @{ var avatarPath = Context.Request.Cookies["avatarPath"]; }
+                                    @if (!string.IsNullOrEmpty(avatarPath))
+                                    {
+                                        var baseUrl = Config["BaseUrl"] ?? string.Empty;
+                                        var src = avatarPath.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? avatarPath : ($"{(string.IsNullOrEmpty(baseUrl) ? string.Empty : baseUrl.TrimEnd('/'))}/{avatarPath.TrimStart('/')}");
+                                        <img src="@src" alt="avatar" class="nav-avatar me-1" />
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-user-circle me-1"></i>
+                                    }
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                                    <li><a class="dropdown-item" asp-page="/Player/Profile"><i class="fas fa-id-card me-2"></i>View Profile</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="post" asp-page="/Logout" class="px-3 py-1">
+                                            <button type="submit" class="btn btn-link p-0 text-danger"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Toast Messages -->
+    <partial name="_ToastMessages" />
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -45,6 +159,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/toast.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

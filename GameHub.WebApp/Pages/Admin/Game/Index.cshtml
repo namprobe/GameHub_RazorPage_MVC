@@ -93,11 +93,13 @@
                     <table class="table table-striped table-hover">
                         <thead class="table-dark">
                             <tr>
+                                <th>Image</th>
                                 <th>Title</th>
                                 <th>Price</th>
                                 <th>Category</th>
                                 <th>Developer</th>
                                 <th>Release Date</th>
+                                <th>Description</th>
                                 <th>Players</th>
                                 <th>Status</th>
                                 <th>Created At</th>
@@ -109,14 +111,38 @@
                             @foreach (var game in Model.Games.Items)
                             {
                                 <tr data-game-id="@game.Id">
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(game.ImagePath))
+                                        {
+                                            <img src="@game.ImagePath" alt="@game.Title" class="img-thumbnail" style="max-width: 50px; max-height: 50px;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 0.8rem;">
+                                                No Image
+                                            </div>
+                                        }
+                                    </td>
                                     <td><strong>@game.Title</strong></td>
                                     <td>$@game.Price.ToString("F2")</td>
                                     <td>@(game.Category?.CategoryName ?? "No Category")</td>
                                     <td>@(game.Developer?.DeveloperName ?? "No Developer")</td>
                                     <td>@(game.ReleaseDate?.ToString("yyyy-MM-dd") ?? "Not set")</td>
                                     <td>
+                                        @if (!string.IsNullOrEmpty(game.Description))
+                                        {
+                                            <span title="@game.Description">
+                                                @(game.Description.Length > 50 ? game.Description.Substring(0, 50) + "..." : game.Description)
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No description</span>
+                                        }
+                                    </td>
+                                    <td>
                                         <span class="badge bg-info">
-                                            @game.PlayerCount players
+                                            @game.RegistrationCount players
                                         </span>
                                     </td>
                                     <td>

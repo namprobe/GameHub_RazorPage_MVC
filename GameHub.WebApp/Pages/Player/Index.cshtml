@@ -1,169 +1,616 @@
 @page "/Player/Index"
 @model GameHub.WebApp.Pages.Player.IndexModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
 
 @{
-    ViewData["Title"] = "Games";
+    ViewData["Title"] = "GameHub - Home";
     Layout = "_Layout";
+    string baseUrl = Config["BaseUrl"] ?? string.Empty;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Explore Games</h1>
-    <a asp-page="/Login" class="btn btn-outline-secondary">Back to Login</a>
-    
-    <!-- You may add a cart or profile link here later -->
-</div>
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 80px 0;
+        position: relative;
+        overflow: hidden;
+    }
 
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-3">
-                <label asp-for="Filter.Title" class="form-label">Title</label>
-                <input asp-for="Filter.Title" class="form-control" placeholder="Search by title..." />
-            </div>
-            <div class="col-md-2">
-                <label asp-for="Filter.CategoryId" class="form-label">Category</label>
-                <select asp-for="Filter.CategoryId" class="form-select">
-                    <option value="">All Categories</option>
-                    @foreach (var category in Model.Categories)
-                    {
-                        <option value="@category.Id">@category.CategoryName</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label asp-for="Filter.DeveloperId" class="form-label">Developer</label>
-                <select asp-for="Filter.DeveloperId" class="form-select">
-                    <option value="">All Developers</option>
-                    @foreach (var developer in Model.Developers)
-                    {
-                        <option value="@developer.Id">@developer.DeveloperName</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label asp-for="Filter.SortBy" class="form-label">Sort By</label>
-                <select asp-for="Filter.SortBy" class="form-select">
-                    <option value="">Default (CreatedAt)</option>
-                    <option value="CreatedAt">Created Date</option>
-                    <option value="Title">Title</option>
-                    <option value="Price">Price</option>
-                    <option value="ReleaseDate">Release Date</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label asp-for="Filter.IsAscending" class="form-label">Order</label>
-                <select asp-for="Filter.IsAscending" class="form-select">
-                    <option value="">Default (Descending)</option>
-                    <option value="true">Ascending</option>
-                    <option value="false">Descending</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label asp-for="Filter.PageSize" class="form-label">Page Size</label>
-                <select asp-for="Filter.PageSize" class="form-select">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                </select>
-            </div>
-            <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary me-2">Search</button>
-                <a asp-page="/Player/Index" class="btn btn-outline-secondary">Clear</a>
-            </div>
-        </form>
-    </div>
-    
-</div>
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="hero-grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23hero-grain)"/></svg>');
+        opacity: 0.3;
+    }
 
-@if (Model.Games.IsSuccess)
-{
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Games (@Model.Games.TotalItems items)</h5>
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-subtitle {
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+
+    .hero-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .hero-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Section Headers */
+    .section-header {
+        text-align: center;
+        margin: 60px 0 40px;
+        position: relative;
+    }
+
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .section-subtitle {
+        font-size: 1.1rem;
+        color: #7f8c8d;
+        margin-bottom: 20px;
+    }
+
+    .section-header::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 2px;
+    }
+
+    /* Game Cards */
+    .game-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+        border: 1px solid #f8f9fa;
+    }
+
+    .game-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .game-card-image {
+        height: 200px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .game-card-image::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="card-grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23card-grain)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .game-card-body {
+        padding: 20px;
+    }
+
+    .game-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+        line-height: 1.3;
+    }
+
+    .game-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .game-price {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #e74c3c;
+    }
+
+    .game-category {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .game-developer {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .game-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #7f8c8d;
+    }
+
+    .game-status {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    /* Category Cards */
+    .category-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px 20px;
+        text-align: center;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 1px solid #f8f9fa;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .category-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .category-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .category-description {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    /* Developer Cards */
+    .developer-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 1px solid #f8f9fa;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .developer-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .developer-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .developer-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+
+    .developer-info {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    /* Navigation */
+    .player-nav {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 15px 0;
+        margin-bottom: 0;
+    }
+
+    .nav-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .nav-link {
+        color: #2c3e50 !important;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        padding: 8px 16px;
+        margin: 0 5px;
+    }
+
+    .nav-link:hover {
+        color: #667eea !important;
+        background: rgba(102, 126, 234, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .nav-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+        }
+        
+        .game-card-image {
+            height: 150px;
+        }
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 hero-content">
+                <h1 class="hero-title">🎮 Welcome to GameHub</h1>
+                <p class="hero-subtitle">Discover the latest games, best prices, and connect with amazing developers. Your gaming adventure starts here!</p>
+                <a href="#top-games" class="hero-btn">
+                    <i class="fas fa-rocket me-2"></i>Explore Games
+                </a>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div style="font-size: 8rem; opacity: 0.3;">🎮</div>
+            </div>
         </div>
-        <div class="card-body">
-            @if (Model.Games.Items?.Any() == true)
-            {
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Title</th>
-                                <th>Price</th>
-                                <th>Category</th>
-                                <th>Developer</th>
-                                <th>Release Date</th>
-                                <th>Players</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var game in Model.Games.Items)
-                            {
-                                <tr>
-                                    <td><strong>@game.Title</strong></td>
-                                    <td>$@game.Price.ToString("F2")</td>
-                                    <td>@(game.Category?.CategoryName ?? "No Category")</td>
-                                    <td>@(game.Developer?.DeveloperName ?? "No Developer")</td>
-                                    <td>@(game.ReleaseDate?.ToString("yyyy-MM-dd") ?? "Not set")</td>
-                                    <td>
-                                        <span class="badge bg-info">
-                                            @game.PlayerCount players
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge @(game.IsActive ? "bg-success" : "bg-secondary")">
-                                            @(game.IsActive ? "Active" : "Inactive")
-                                        </span>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+    </div>
+</section>
 
-                @if (Model.Games.TotalPages > 1)
+<div class="container mt-5">
+    <!-- Top Played Games Section -->
+    <section id="top-games">
+        <div class="section-header">
+            <h2 class="section-title">🏆 Top Played Games</h2>
+            <p class="section-subtitle">Most registered games by players</p>
+        </div>
+        
+        @if (Model.TopRegisteredGames.IsSuccess && Model.TopRegisteredGames.Items?.Any() == true)
+        {
+            <div class="row g-4">
+                @foreach (var game in Model.TopRegisteredGames.Items)
                 {
-                    <nav aria-label="Games pagination">
-                        <ul class="pagination justify-content-center mt-3">
-                            @if (Model.Games.CurrentPage > 1)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link" asp-page="/Player/Index" asp-route-Filter.Page="@(Model.Games.CurrentPage - 1)" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.Title="@Model.Filter.Title" asp-route-Filter.CategoryId="@Model.Filter.CategoryId" asp-route-Filter.DeveloperId="@Model.Filter.DeveloperId" asp-route-Filter.SortBy="@Model.Filter.SortBy" asp-route-Filter.IsAscending="@Model.Filter.IsAscending">Previous</a>
-                                </li>
-                            }
-
-                            @for (int i = Math.Max(1, Model.Games.CurrentPage - 2); i <= Math.Min(Model.Games.TotalPages, Model.Games.CurrentPage + 2); i++)
-                            {
-                                <li class="page-item @(i == Model.Games.CurrentPage ? "active" : "")">
-                                    <a class="page-link" asp-page="/Player/Index" asp-route-Filter.Page="@i" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.Title="@Model.Filter.Title" asp-route-Filter.CategoryId="@Model.Filter.CategoryId" asp-route-Filter.DeveloperId="@Model.Filter.DeveloperId" asp-route-Filter.SortBy="@Model.Filter.SortBy" asp-route-Filter.IsAscending="@Model.Filter.IsAscending">@i</a>
-                                </li>
-                            }
-
-                            @if (Model.Games.CurrentPage < Model.Games.TotalPages)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link" asp-page="/Player/Index" asp-route-Filter.Page="@(Model.Games.CurrentPage + 1)" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.Title="@Model.Filter.Title" asp-route-Filter.CategoryId="@Model.Filter.CategoryId" asp-route-Filter.DeveloperId="@Model.Filter.DeveloperId" asp-route-Filter.SortBy="@Model.Filter.SortBy" asp-route-Filter.IsAscending="@Model.Filter.IsAscending">Next</a>
-                                </li>
-                            }
-                        </ul>
-                    </nav>
+                    var imgSrc = string.IsNullOrEmpty(game.ImagePath) ? null : ($"{baseUrl}{game.ImagePath}");
+                    <div class="col-lg-4 col-md-6">
+                        <div class="game-card">
+                            <div class="game-card-image">
+                                @if (!string.IsNullOrEmpty(imgSrc))
+                                {
+                                    <img src="@imgSrc" alt="@game.Title" style="width:100%;height:100%;object-fit:cover;" />
+                                }
+                                else
+                                {
+                                    <div style="position: relative; z-index: 2;">🏅</div>
+                                }
+                            </div>
+                            <div class="game-card-body">
+                                <h5 class="game-title">@game.Title</h5>
+                                <div class="game-meta">
+                                    <span class="game-price">$@game.Price.ToString("F2")</span>
+                                    <span class="game-category">@(game.Category?.CategoryName ?? "No Category")</span>
+                                </div>
+                                <div class="game-developer">
+                                    <i class="fas fa-building me-1"></i>@(game.Developer?.DeveloperName ?? "No Developer")
+                                </div>
+                                <div class="game-stats">
+                                    <span><i class="fas fa-users me-1"></i>@game.RegistrationCount players</span>
+                                    <span class="game-status @(game.IsActive ? "status-active" : "status-inactive")">
+                                        @(game.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 }
-            }
-            else
+            </div>
+            <div class="text-center mt-4">
+                <a asp-page="/Player/Games" asp-route-Filter.SortBy="RegistrationCount" asp-route-Filter.IsAscending="false" class="btn btn-warning btn-lg">
+                    <i class="fas fa-trophy me-2"></i>View Most Played Games
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <div style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem;">🏆</div>
+                <p class="text-muted">No top played games yet.</p>
+            </div>
+        }
+    </section>
+
+    <!-- Latest Games Section -->
+    <section id="latest-games">
+        <div class="section-header">
+            <h2 class="section-title">🔥 Latest Games</h2>
+            <p class="section-subtitle">Discover the newest releases in the gaming world</p>
+        </div>
+        
+        @if (Model.LatestGames.IsSuccess && Model.LatestGames.Items?.Any() == true)
+        {
+            <div class="row g-4">
+                @foreach (var game in Model.LatestGames.Items)
+                {
+                    var imgSrc = string.IsNullOrEmpty(game.ImagePath) ? null : ($"{baseUrl}{game.ImagePath}");
+                    <div class="col-lg-4 col-md-6">
+                        <div class="game-card">
+                            <div class="game-card-image">
+                                @if (!string.IsNullOrEmpty(imgSrc))
+                                {
+                                    <img src="@imgSrc" alt="@game.Title" style="width:100%;height:100%;object-fit:cover;" />
+                                }
+                                else
+                                {
+                                    <div style="position: relative; z-index: 2;">🎮</div>
+                                }
+                            </div>
+                            <div class="game-card-body">
+                                <h5 class="game-title">@game.Title</h5>
+                                <div class="game-meta">
+                                    <span class="game-price">$@game.Price.ToString("F2")</span>
+                                    <span class="game-category">@(game.Category?.CategoryName ?? "No Category")</span>
+                                </div>
+                                <div class="game-developer">
+                                    <i class="fas fa-building me-1"></i>@(game.Developer?.DeveloperName ?? "No Developer")
+                                </div>
+                                <div class="game-stats">
+                                    <span><i class="fas fa-users me-1"></i>@game.RegistrationCount players</span>
+                                    <span class="game-status @(game.IsActive ? "status-active" : "status-inactive")">
+                                        @(game.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <div class="text-center mt-4">
+                <a asp-page="/Player/Games" asp-route-Filter.SortBy="CreatedAt" asp-route-Filter.IsAscending="false" class="btn btn-primary btn-lg">
+                    <i class="fas fa-arrow-right me-2"></i>View All Latest Games
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <div style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem;">🎮</div>
+                <p class="text-muted">No latest games available at the moment.</p>
+            </div>
+        }
+    </section>
+
+    <!-- Best Price Games Section -->
+    <section id="best-prices">
+        <div class="section-header">
+            <h2 class="section-title">💰 Best Prices</h2>
+            <p class="section-subtitle">Amazing games at unbeatable prices</p>
+        </div>
+        
+        @if (Model.BestPriceGames.IsSuccess && Model.BestPriceGames.Items?.Any() == true)
+        {
+            <div class="row g-4">
+                @foreach (var game in Model.BestPriceGames.Items)
+                {
+                    var imgSrc = string.IsNullOrEmpty(game.ImagePath) ? null : ($"{baseUrl}{game.ImagePath}");
+                    <div class="col-lg-4 col-md-6">
+                        <div class="game-card">
+                            <div class="game-card-image">
+                                @if (!string.IsNullOrEmpty(imgSrc))
+                                {
+                                    <img src="@imgSrc" alt="@game.Title" style="width:100%;height:100%;object-fit:cover;" />
+                                }
+                                else
+                                {
+                                    <div style="position: relative; z-index: 2;">💰</div>
+                                }
+                            </div>
+                            <div class="game-card-body">
+                                <h5 class="game-title">@game.Title</h5>
+                                <div class="game-meta">
+                                    <span class="game-price">$@game.Price.ToString("F2")</span>
+                                    <span class="game-category">@(game.Category?.CategoryName ?? "No Category")</span>
+                                </div>
+                                <div class="game-developer">
+                                    <i class="fas fa-building me-1"></i>@(game.Developer?.DeveloperName ?? "No Developer")
+                                </div>
+                                <div class="game-stats">
+                                    <span><i class="fas fa-users me-1"></i>@game.RegistrationCount players</span>
+                                    <span class="game-status @(game.IsActive ? "status-active" : "status-inactive")">
+                                        @(game.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <div class="text-center mt-4">
+                <a asp-page="/Player/Games" asp-route-Filter.SortBy="Price" asp-route-Filter.IsAscending="true" class="btn btn-success btn-lg">
+                    <i class="fas fa-tags me-2"></i>View All Best Prices
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <div style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem;">💰</div>
+                <p class="text-muted">No best price games available at the moment.</p>
+            </div>
+        }
+    </section>
+
+    <!-- Categories Section -->
+    <section id="categories">
+        <div class="section-header">
+            <h2 class="section-title">📂 Game Categories</h2>
+            <p class="section-subtitle">Explore games by category</p>
+        </div>
+        
+        @if (Model.Categories.Any())
+        {
+            <div class="row g-4">
+                @foreach (var category in Model.Categories)
+                {
+                    <div class="col-lg-3 col-md-6">
+                        <a asp-page="/Player/Games" asp-route-Filter.CategoryId="@category.Id" class="category-card">
+                            <div class="category-icon">📂</div>
+                            <h5 class="category-name">@category.CategoryName</h5>
+                            <p class="category-description">Explore @category.CategoryName games</p>
+                        </a>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <div style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem;">📂</div>
+                <p class="text-muted">No categories available at the moment.</p>
+            </div>
+        }
+    </section>
+
+    <!-- Developers Section -->
+    <section id="developers">
+        <div class="section-header">
+            <h2 class="section-title">🏢 Top Developers</h2>
+            <p class="section-subtitle">Discover amazing game developers</p>
+        </div>
+        
+        @if (Model.Developers.Any())
+        {
+            <div class="row g-4">
+                @foreach (var developer in Model.Developers.Take(8))
+                {
+                    <div class="col-lg-3 col-md-6">
+                        <a asp-page="/Player/Games" asp-route-Filter.DeveloperId="@developer.Id" class="developer-card">
+                            <div class="developer-avatar">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <h5 class="developer-name">@developer.DeveloperName</h5>
+                            <p class="developer-info">Explore games by @developer.DeveloperName</p>
+                        </a>
+                    </div>
+                }
+            </div>
+            
+            @if (Model.Developers.Count() > 8)
             {
-                <div class="text-center py-4">
-                    <p class="text-muted">No games found.</p>
+                <div class="text-center mt-4">
+                    <a asp-page="/Player/Games" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-building me-2"></i>View All Developers
+                    </a>
                 </div>
             }
-        </div>
-    </div>
-}
-else
-{
-    <div class="alert alert-danger">
-        <h4>Error Loading Games</h4>
-        <p>@Model.Games.Message</p>
-    </div>
-}
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <div style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem;">🏢</div>
+                <p class="text-muted">No developers available at the moment.</p>
+            </div>
+        }
+    </section>
+</div>

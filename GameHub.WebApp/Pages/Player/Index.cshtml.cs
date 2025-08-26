@@ -4,6 +4,7 @@ using GameHub.BLL.DTOs.Developer;
 using GameHub.BLL.Interfaces;
 using GameHub.BLL.Models;
 using Microsoft.AspNetCore.Mvc;
+using GameHub.BLL.Helpers;
 
 namespace GameHub.WebApp.Pages.Player
 {
@@ -17,19 +18,25 @@ namespace GameHub.WebApp.Pages.Player
 			IGameService gameService,
 			IGameCategoryService gameCategoryService,
 			IDeveloperService developerService,
-			GameHub.BLL.Helpers.CurrentUserHelper currentUserHelper) : base(currentUserHelper)
+			CurrentUserHelper currentUserHelper) : base(currentUserHelper)
 		{
 			_gameService = gameService;
 			_gameCategoryService = gameCategoryService;
 			_developerService = developerService;
 		}
 
-		public PaginationResult<GameResponse> Games { get; set; } = new();
-
-		[BindProperty(SupportsGet = true)]
-		public GameFilter Filter { get; set; } = new();
-
+		// Top registered games
+		public PaginationResult<GameResponse> TopRegisteredGames { get; set; } = new();
+		// Featured Games - Latest Games
+		public PaginationResult<GameResponse> LatestGames { get; set; } = new();
+		
+		// Best Price Games
+		public PaginationResult<GameResponse> BestPriceGames { get; set; } = new();
+		
+		// Popular Categories
 		public IEnumerable<GameCategoryItem> Categories { get; set; } = new List<GameCategoryItem>();
+		
+		// Featured Developers
 		public IEnumerable<DeveloperItem> Developers { get; set; } = new List<DeveloperItem>();
 
 		public async Task<IActionResult> OnGetAsync()
@@ -37,24 +44,53 @@ namespace GameHub.WebApp.Pages.Player
 			var access = await ValidatePlayerAccessAsync();
 			if (access != null) return access;
 
-			// Defaults
-			if (Filter.Page <= 0) Filter.Page = 1;
-			if (Filter.PageSize <= 0) Filter.PageSize = 10;
+			// Top registered games (by RegistrationCount DESC, limit 6)
+			var topGamesFilter = new GameFilter
+			{
+				Page = 1,
+				PageSize = 6,
+				SortBy = "RegistrationCount",
+				IsAscending = false,
+				IsActive = true
+			};
+			TopRegisteredGames = await _gameService.GetPagedAsync(topGamesFilter);
 
-			// Dropdown data
+			// Load Latest Games (sorted by CreatedAt DESC, limit 6)
+			var latestGamesFilter = new GameFilter
+			{
+				Page = 1,
+				PageSize = 6,
+				SortBy = "CreatedAt",
+				IsAscending = false, // DESC để lấy mới nhất
+				IsActive = true
+			};
+			LatestGames = await _gameService.GetPagedAsync(latestGamesFilter);
+
+			// Load Best Price Games (sorted by Price ASC, limit 6)
+			var bestPriceFilter = new GameFilter
+			{
+				Page = 1,
+				PageSize = 6,
+				SortBy = "Price",
+				IsAscending = true, // ASC để lấy giá thấp nhất
+				IsActive = true
+			};
+			BestPriceGames = await _gameService.GetPagedAsync(bestPriceFilter);
+
+			// Load Categories
 			var categoriesResult = await _gameCategoryService.GetAllAsync();
 			if (categoriesResult.IsSuccess)
 			{
 				Categories = categoriesResult.Data ?? new List<GameCategoryItem>();
 			}
 
+			// Load Developers
 			var developersResult = await _developerService.GetAllAsync();
 			if (developersResult.IsSuccess)
 			{
 				Developers = developersResult.Data ?? new List<DeveloperItem>();
 			}
 
-			Games = await _gameService.GetPagedAsync(Filter);
 			return Page();
 		}
 	}

@@ -81,6 +81,7 @@ public static class ServiceConfiguration
         services.AddScoped<IGameService, GameService>();
         services.AddScoped<IDeveloperService, DeveloperService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ICartService, CartService>();
         
         return services;
     }

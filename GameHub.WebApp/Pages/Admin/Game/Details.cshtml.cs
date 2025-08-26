@@ -68,6 +68,9 @@ namespace GameHub.WebApp.Pages.Admin.Game
                                 
                                 <dt class=""col-sm-4"">Release Date:</dt>
                                 <dd class=""col-sm-8"">{(Game.ReleaseDate?.ToString("yyyy-MM-dd") ?? "Not set")}</dd>
+                                
+                                <dt class=""col-sm-4"">Description:</dt>
+                                <dd class=""col-sm-8"">{(string.IsNullOrEmpty(Game.Description) ? "No description" : Game.Description)}</dd>
                             </dl>
                         </div>
                         <div class=""col-md-6"">
@@ -89,12 +92,17 @@ namespace GameHub.WebApp.Pages.Admin.Game
                                 <dd class=""col-sm-8"">
                                     <span class=""badge bg-info fs-6"">
                                         <i class=""fas fa-users me-1""></i>
-                                        {Game.PlayerCount} players
+                                        {Game.RegistrationCount} players
                                     </span>
                                 </dd>
                                 
                                 <dt class=""col-sm-4"">Game ID:</dt>
                                 <dd class=""col-sm-8"">#{Game.Id}</dd>
+                                
+                                <dt class=""col-sm-4"">Image:</dt>
+                                <dd class=""col-sm-8"">
+                                    {(string.IsNullOrEmpty(Game.ImagePath) ? "<span class=\"text-muted\">No image</span>" : $"<img src=\"{Game.ImagePath}\" alt=\"{Game.Title}\" class=\"img-thumbnail\" style=\"max-width: 200px; max-height: 150px;\" />")}
+                                </dd>
                             </dl>
                         </div>
                     </div>

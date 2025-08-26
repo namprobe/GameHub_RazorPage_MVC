@@ -14,12 +14,11 @@ public class GameResponse
     public DateOnly? ReleaseDate { get; set; }
 
     public bool IsActive { get; set; }
-    
-    public int PlayerCount { get; set; }
     public DateTime? CreatedAt { get; set; }
+    public string? Description { get; set; }
+    public string? ImagePath { get; set; }
+    public int RegistrationCount { get; set; } = 0;
     public int? CreatedBy { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public int? UpdatedBy { get; set; }
 
     public DeveloperItem? Developer { get; set; }
 

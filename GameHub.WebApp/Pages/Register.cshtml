@@ -1,0 +1,358 @@
+@page "/Register"
+@model GameHub.WebApp.Pages.RegisterModel
+@{
+    ViewData["Title"] = "Register";
+    Layout = "_Layout";
+}
+
+<style>
+    .register-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px 0;
+    }
+
+    .register-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+    }
+
+    .register-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+    }
+
+    .register-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .register-header h2 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        position: relative;
+        z-index: 1;
+    }
+
+    .register-header p {
+        margin: 10px 0 0 0;
+        font-size: 1.1rem;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+    }
+
+    .register-body {
+        padding: 40px;
+    }
+
+    .form-floating {
+        margin-bottom: 20px;
+    }
+
+    .form-floating .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 15px 20px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.8);
+    }
+
+    .form-floating .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: white;
+    }
+
+    .form-floating label {
+        padding: 15px 20px;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .form-floating .form-control:focus + label,
+    .form-floating .form-control:not(:placeholder-shown) + label {
+        color: #667eea;
+        transform: translateY(-1.5rem) scale(0.85);
+    }
+
+    .btn-register {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 15px 30px;
+        font-size: 18px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .btn-register:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        color: white;
+    }
+
+    .btn-register:active {
+        transform: translateY(0);
+    }
+
+    .avatar-upload {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .avatar-preview {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 3px solid #667eea;
+        object-fit: cover;
+        margin: 0 auto 15px;
+        display: block;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+
+    .avatar-preview:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .file-input-wrapper {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+    .file-input-wrapper input[type=file] {
+        position: absolute;
+        left: -9999px;
+    }
+
+    .file-input-label {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-block;
+        font-weight: 500;
+    }
+
+    .file-input-label:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .login-link {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .login-link a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+
+    .login-link a:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
+
+    .validation-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .password-strength {
+        margin-top: 5px;
+        font-size: 0.875rem;
+    }
+
+    .strength-weak { color: #dc3545; }
+    .strength-medium { color: #ffc107; }
+    .strength-strong { color: #28a745; }
+
+    @@media (max-width: 768px) {
+        .register-body {
+            padding: 30px 20px;
+        }
+        
+        .register-header h2 {
+            font-size: 2rem;
+        }
+    }
+</style>
+
+<div class="register-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-5">
+                <div class="register-card">
+                    <div class="register-header">
+                        <h2>🎮 Join GameHub</h2>
+                        <p>Start your gaming adventure today!</p>
+                    </div>
+                    
+                    <div class="register-body">
+                        <form method="post" enctype="multipart/form-data" id="registerForm">
+                            <!-- Avatar Upload -->
+                            <div class="avatar-upload">
+                                <img id="avatarPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e9ecef'/%3E%3Ctext x='50' y='55' text-anchor='middle' font-size='40' fill='%236c757d'%3E👤%3C/text%3E%3C/svg%3E" 
+                                     alt="Avatar Preview" class="avatar-preview" />
+                                <div class="file-input-wrapper">
+                                    <input type="file" asp-for="RegisterRequest.Avatar" id="avatarInput" accept="image/*" />
+                                    <label for="avatarInput" class="file-input-label">
+                                        <i class="fas fa-camera me-2"></i>Choose Avatar
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Username -->
+                            <div class="form-floating">
+                                <input asp-for="RegisterRequest.Username" class="form-control" placeholder="Username" />
+                                <label asp-for="RegisterRequest.Username">Username</label>
+                                <span asp-validation-for="RegisterRequest.Username" class="validation-message"></span>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="form-floating">
+                                <input asp-for="RegisterRequest.Email" class="form-control" type="email" placeholder="Email" />
+                                <label asp-for="RegisterRequest.Email">Email</label>
+                                <span asp-validation-for="RegisterRequest.Email" class="validation-message"></span>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="form-floating">
+                                <input asp-for="RegisterRequest.Password" class="form-control" type="password" placeholder="Password" id="password" />
+                                <label asp-for="RegisterRequest.Password">Password</label>
+                                <span asp-validation-for="RegisterRequest.Password" class="validation-message"></span>
+                                <div class="password-strength" id="passwordStrength"></div>
+                            </div>
+
+                            <!-- Confirm Password -->
+                            <div class="form-floating">
+                                <input asp-for="RegisterRequest.ConfirmPassword" class="form-control" type="password" placeholder="Confirm Password" id="confirmPassword" />
+                                <label asp-for="RegisterRequest.ConfirmPassword">Confirm Password</label>
+                                <span asp-validation-for="RegisterRequest.ConfirmPassword" class="validation-message"></span>
+                                <div class="validation-message" id="passwordMatch"></div>
+                            </div>
+
+                            <button type="submit" class="btn btn-register">
+                                <i class="fas fa-user-plus me-2"></i>Create Account
+                            </button>
+                        </form>
+
+                        <div class="login-link">
+                            Already have an account? <a asp-page="/Login">Sign In</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Avatar preview functionality
+        document.getElementById('avatarInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('avatarPreview').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Password strength checker
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            
+            let strength = 0;
+            let feedback = '';
+            
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            switch(strength) {
+                case 0:
+                case 1:
+                    feedback = '<span class="strength-weak">Weak password</span>';
+                    break;
+                case 2:
+                case 3:
+                    feedback = '<span class="strength-medium">Medium strength password</span>';
+                    break;
+                case 4:
+                case 5:
+                    feedback = '<span class="strength-strong">Strong password</span>';
+                    break;
+            }
+            
+            strengthDiv.innerHTML = feedback;
+        });
+
+        // Password match checker
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            const matchDiv = document.getElementById('passwordMatch');
+            
+            if (confirmPassword === '') {
+                matchDiv.innerHTML = '';
+            } else if (password === confirmPassword) {
+                matchDiv.innerHTML = '<span class="strength-strong">Passwords match!</span>';
+            } else {
+                matchDiv.innerHTML = '<span class="strength-weak">Passwords do not match</span>';
+            }
+        });
+
+        // Form validation enhancement
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+                return false;
+            }
+        });
+    </script>
+}

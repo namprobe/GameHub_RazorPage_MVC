@@ -1,0 +1,86 @@
+@{
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = TempData["ErrorMessage"] as string;
+    var warningMessage = TempData["WarningMessage"] as string;
+    var infoMessage = TempData["InfoMessage"] as string;
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <script>
+        (function(){
+            const msg = '@Html.Raw(successMessage)';
+            console.log('[Toast] Success message found in TempData:', msg);
+            const show = function(){
+                if (window.toastSystem) {
+                    console.log('[Toast] Showing success via toastSystem');
+                    try { toastSystem.success(msg); } catch(e) { console.error('[Toast] Error showing success:', e); }
+                } else {
+                    console.warn('[Toast] toastSystem not available at call time');
+                }
+            };
+            if (window.toastSystem) { show(); }
+            else { window.addEventListener('load', () => { console.log('[Toast] window load fired, retry success'); show(); }, { once: true }); }
+        })();
+    </script>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <script>
+        (function(){
+            const msg = '@Html.Raw(errorMessage)';
+            console.log('[Toast] Error message found in TempData:', msg);
+            const show = function(){
+                if (window.toastSystem) {
+                    console.log('[Toast] Showing error via toastSystem');
+                    try { toastSystem.error(msg); } catch(e) { console.error('[Toast] Error showing error:', e); }
+                } else {
+                    console.warn('[Toast] toastSystem not available at call time');
+                }
+            };
+            if (window.toastSystem) { show(); }
+            else { window.addEventListener('load', () => { console.log('[Toast] window load fired, retry error'); show(); }, { once: true }); }
+        })();
+    </script>
+}
+
+@if (!string.IsNullOrEmpty(warningMessage))
+{
+    <script>
+        (function(){
+            const msg = '@Html.Raw(warningMessage)';
+            console.log('[Toast] Warning message found in TempData:', msg);
+            const show = function(){
+                if (window.toastSystem) {
+                    console.log('[Toast] Showing warning via toastSystem');
+                    try { toastSystem.warning(msg); } catch(e) { console.error('[Toast] Error showing warning:', e); }
+                } else {
+                    console.warn('[Toast] toastSystem not available at call time');
+                }
+            };
+            if (window.toastSystem) { show(); }
+            else { window.addEventListener('load', () => { console.log('[Toast] window load fired, retry warning'); show(); }, { once: true }); }
+        })();
+    </script>
+}
+
+@if (!string.IsNullOrEmpty(infoMessage))
+{
+    <script>
+        (function(){
+            const msg = '@Html.Raw(infoMessage)';
+            console.log('[Toast] Info message found in TempData:', msg);
+            const show = function(){
+                if (window.toastSystem) {
+                    console.log('[Toast] Showing info via toastSystem');
+                    try { toastSystem.info(msg); } catch(e) { console.error('[Toast] Error showing info:', e); }
+                } else {
+                    console.warn('[Toast] toastSystem not available at call time');
+                }
+            };
+            if (window.toastSystem) { show(); }
+            else { window.addEventListener('load', () => { console.log('[Toast] window load fired, retry info'); show(); }, { once: true }); }
+        })();
+    </script>
+}

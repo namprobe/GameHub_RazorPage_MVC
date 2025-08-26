@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using GameHub.BLL.Validations;
+using Microsoft.AspNetCore.Http;
 
 namespace GameHub.BLL.DTOs.Game;
 
@@ -22,4 +23,9 @@ public class GameRequest
 
     [Required(ErrorMessage = "Category is required")]
     public int? CategoryId { get; set; }
+
+    public string? Description { get; set; }
+
+    [ImageAttributeValidation]
+    public IFormFile? Image { get; set; }
 }

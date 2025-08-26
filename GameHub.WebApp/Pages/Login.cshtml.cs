@@ -1,6 +1,7 @@
 using GameHub.BLL.DTOs.Auth;
 using GameHub.BLL.Helpers;
 using GameHub.BLL.Interfaces;
+using GameHub.WebApp.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -63,6 +64,7 @@ namespace GameHub.WebApp.Pages
         {
             if (!ModelState.IsValid)
             {
+                this.SetValidationErrors(ModelState);
                 return Page();
             }
 
@@ -70,7 +72,20 @@ namespace GameHub.WebApp.Pages
 
             if (result.IsSuccess)
             {
-                SuccessMessage = result.Message;
+                this.SetSuccessMessage(result.Message ?? "Login successful!");
+
+                // Store avatarPath for navbar avatar
+                if (result.Data != null && !string.IsNullOrEmpty(result.Data.AvatarPath))
+                {
+                    var options = new CookieOptions
+                    {
+                        IsEssential = true,
+                        HttpOnly = false,
+                        Secure = false,
+                        Expires = result.Data.ExpiresAt
+                    };
+                    Response.Cookies.Append("avatarPath", result.Data.AvatarPath, options);
+                }
 
                 // Redirect by role
                 try
@@ -86,13 +101,13 @@ namespace GameHub.WebApp.Pages
                 }
                 catch
                 {
-                    ErrorMessage = "Authentication error occurred";
+                    this.SetErrorMessage("Authentication error occurred");
                     return Page();
                 }
             }
             else
             {
-                ErrorMessage = result.Message ?? "Login failed";
+                this.SetErrorMessage(result.Message ?? "Login failed. Please check your credentials.");
                 return Page();
             }
         }

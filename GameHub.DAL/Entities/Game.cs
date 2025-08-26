@@ -12,6 +12,11 @@ public partial class Game : BaseEntity
 
     public DateOnly? ReleaseDate { get; set; }
 
+    public string? Description { get; set; }
+
+    public string? ImagePath { get; set; }
+
+    public int RegistrationCount { get; set; } = 0;
     public int? DeveloperId { get; set; }
 
     public int? CategoryId { get; set; }

@@ -32,6 +32,9 @@
                     
                     <dt class="col-sm-4">Release Date:</dt>
                     <dd class="col-sm-8">@(Model.Game.ReleaseDate?.ToString("yyyy-MM-dd") ?? "Not set")</dd>
+                    
+                    <dt class="col-sm-4">Description:</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Game.Description) ? "No description" : Model.Game.Description)</dd>
                 </dl>
             </div>
             <div class="col-md-6">
@@ -51,6 +54,18 @@
                     
                     <dt class="col-sm-4">Game ID:</dt>
                     <dd class="col-sm-8">#@Model.Game.Id</dd>
+                    
+                    <dt class="col-sm-4">Image:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.Game.ImagePath))
+                        {
+                            <img src="@Model.Game.ImagePath" alt="@Model.Game.Title" class="img-thumbnail" style="max-width: 200px; max-height: 150px;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">No image</span>
+                        }
+                    </dd>
                 </dl>
             </div>
         </div>

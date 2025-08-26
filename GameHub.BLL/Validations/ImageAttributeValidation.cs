@@ -5,27 +5,34 @@ namespace GameHub.BLL.Validations;
 
 public class ImageAttributeValidation : ValidationAttribute
 {
-    public override bool IsValid(object? value)
+    private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+    private readonly int _maxFileSize = 10 * 1024 * 1024; // 10MB
+
+    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
+        if (value == null)
+        {
+            return ValidationResult.Success; // Image is optional
+        }
+
         if (value is not IFormFile file)
         {
-            ErrorMessage = "Invalid file type";
-            return false;
+            return new ValidationResult("Invalid file type");
         }
 
-        if (file.Length > 10 * 1024 * 1024)
+        // Check file extension
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!_allowedExtensions.Contains(extension))
         {
-            ErrorMessage = "File size must be less than 10MB";
-            return false;
+            return new ValidationResult($"Only {string.Join(", ", _allowedExtensions)} files are allowed");
         }
 
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
-        var extension = Path.GetExtension(file.FileName).ToLower();
-        if (!allowedExtensions.Contains(extension))
+        // Check file size
+        if (file.Length > _maxFileSize)
         {
-            ErrorMessage = "Invalid image file type";
-            return false;
+            return new ValidationResult($"File size must be less than {_maxFileSize / (1024 * 1024)}MB");
         }
-        return true;
+
+        return ValidationResult.Success;
     }
 }

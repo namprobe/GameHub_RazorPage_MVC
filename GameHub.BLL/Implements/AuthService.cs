@@ -51,6 +51,13 @@ public class AuthService : IAuthService
 
             var (accessToken, expiresAt) = JwtHelper.GenerateToken(user, _configuration);
 
+            var loginResponse = new LoginResponse
+            {
+                AccessToken = accessToken,
+                ExpiresAt = expiresAt,
+                Role = user.Role.ToString()
+            };
+
             if (user.Role == RoleEnum.Player)
             {
                 var player = await _unitOfWork.PlayerRepository.GetFirstOrDefaultAsync(x => x.UserId == user.Id);
@@ -58,6 +65,7 @@ public class AuthService : IAuthService
                 {
                     try
                     {
+                        loginResponse.AvatarPath = player.AvatarPath;
                         player.LastLogin = DateTime.Now;
                         player.UpdateAudit(user.Id);
                         _unitOfWork.PlayerRepository.Update(player);
@@ -71,7 +79,7 @@ public class AuthService : IAuthService
                 }
             }
             _sessionHelper.SetJwtToken(accessToken, expiresAt);
-            return Result<LoginResponse>.Success(new LoginResponse { AccessToken = accessToken, ExpiresAt = expiresAt, Role = user.Role.ToString() }, "Login successfully");
+            return Result<LoginResponse>.Success(loginResponse, "Login successfully");
         }
         catch (Exception ex)
         {
@@ -225,6 +233,8 @@ public class AuthService : IAuthService
                 return Result.Error("Username already exists");
             }
 
+            string? oldAvatarPath = player.AvatarPath; // capture old path before any changes
+
             if (request.Avatar != null)
             {
                 try
@@ -232,21 +242,11 @@ public class AuthService : IAuthService
                     var avatarPath = await _fileUploadHelper.UploadFileAsync(request.Avatar, "avatars");
                     if (avatarPath != null)
                     {
-                        // Dùng background task để xóa avatar cũ khi upload avatar mới
-                        _ = Task.Run(() =>
-                        {
-                            var oldAvatarPath = player.AvatarPath;
-                            if (oldAvatarPath != null)
-                            {
-                                _fileUploadHelper.DeleteFile(oldAvatarPath);
-                            }
-                        });
-                        player.AvatarPath = avatarPath;
+                        player.AvatarPath = avatarPath; // set new path
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Log lỗi avatar nhưng không rollback
                     _logger.LogError(ex, "Error uploading avatar.");
                 }
             }
@@ -262,6 +262,22 @@ public class AuthService : IAuthService
             {
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
+            }
+
+            // Delete old avatar AFTER commit using captured path
+            if (request.Avatar != null && !string.IsNullOrEmpty(oldAvatarPath) && !string.Equals(oldAvatarPath, player.AvatarPath, StringComparison.OrdinalIgnoreCase))
+            {
+                _ = Task.Run(() =>
+                {
+                    try
+                    {
+                        _fileUploadHelper.DeleteFile(oldAvatarPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to delete old avatar: {Path}", oldAvatarPath);
+                    }
+                });
             }
             return Result.Success("Profile updated successfully");
         }

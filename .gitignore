@@ -424,3 +424,8 @@ $RECYCLE.BIN/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+ 
+#Ignore upload folder
+/wwwroot/uploads/*
+**/wwwroot/uploads/**
+!**/wwwroot/uploads/.gitkeep

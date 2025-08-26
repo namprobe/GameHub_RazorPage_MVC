@@ -20,7 +20,7 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
             
             <input type="hidden" asp-for="Id" />
@@ -69,6 +69,24 @@
                             <option value="">-- Select Developer --</option>
                         </select>
                         <span asp-validation-for="GameRequest.DeveloperId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label asp-for="GameRequest.Image" class="form-label">Game Image</label>
+                        <input asp-for="GameRequest.Image" class="form-control" type="file" accept="image/*" />
+                        <div class="form-text">Upload a new game image (JPG, PNG, GIF). Max size: 10MB. Leave empty to keep current image.</div>
+                        <span asp-validation-for="GameRequest.Image" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label asp-for="GameRequest.Description" class="form-label">Description</label>
+                        <textarea asp-for="GameRequest.Description" class="form-control" rows="4" placeholder="Enter game description..."></textarea>
+                        <span asp-validation-for="GameRequest.Description" class="text-danger"></span>
                     </div>
                 </div>
             </div>
