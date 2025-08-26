@@ -1,0 +1,126 @@
+@page "/Player/Cart"
+@model GameHub.WebApp.Pages.Player.CartModel
+@{
+    ViewData["Title"] = "Your Cart";
+}
+
+<div class="container py-4">
+    <h2 class="mb-4">Your Cart</h2>
+    <div class="row g-4">
+        <div class="col-lg-8">
+
+    @if (Model.Cart == null || Model.Cart.TotalItems == 0)
+    {
+        <div class="alert alert-info">Your cart is empty.</div>
+    }
+    else
+    {
+        <!-- Cart items list (Udemy-like row layout) -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="text-muted">@Model.Cart.TotalItems items in cart</div>
+            <div class="btn-group">
+                <a class="btn btn-sm btn-outline-primary @(Model.Filter.Page <= 1 ? "disabled" : string.Empty)" asp-page="/Player/Cart" asp-route-Filter.Page="@(Model.Filter.Page - 1)" asp-route-Filter.PageSize="@Model.Filter.PageSize"><i class="fas fa-chevron-left"></i></a>
+                <a class="btn btn-sm btn-outline-primary @((Model.Cart.TotalItems <= Model.Filter.Page * Model.Filter.PageSize) ? "disabled" : string.Empty)" asp-page="/Player/Cart" asp-route-Filter.Page="@(Model.Filter.Page + 1)" asp-route-Filter.PageSize="@Model.Filter.PageSize"><i class="fas fa-chevron-right"></i></a>
+            </div>
+        </div>
+        <div class="row g-2">
+            @foreach (var item in Model.Cart.CartItems)
+            {
+                var baseUrl = Model.Config["BaseUrl"] ?? string.Empty;
+                var img = string.IsNullOrEmpty(item.GameImagePath)
+                    ? string.Empty
+                    : $"{baseUrl}{item.GameImagePath}";
+                <div class="col-12">
+                    <div class="border rounded-3 p-3 shadow-sm d-flex align-items-start gap-3">
+                        <a asp-page="/Player/GameDetail" asp-route-id="@item.GameId">
+                            <img src="@img" alt="@item.GameTitle" style="width:140px;height:80px;object-fit:cover;border-radius:8px;" />
+                        </a>
+                        <div class="flex-grow-1">
+                            <a class="text-decoration-none" asp-page="/Player/GameDetail" asp-route-id="@item.GameId"><h6 class="mb-1 text-truncate">@item.GameTitle</h6></a>
+                            <div class="small text-muted">Item in your cart</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold mb-2">@item.Price.ToString("C")</div>
+                            <form method="post" asp-page-handler="Remove">
+                                <input type="hidden" name="gameId" value="@item.GameId" />
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        }
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Summary</h5>
+                    <div class="d-flex justify-content-between">
+                        <span>Total items</span>
+                        <strong>@(Model.Cart?.TotalItems ?? 0)</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Total</span>
+                        <strong>@((Model.Cart?.TotalPrice ?? 0m).ToString("C"))</strong>
+                    </div>
+                    <button class="btn btn-primary w-100" disabled>Proceed to checkout</button>
+                    <form method="post" asp-page-handler="Clear" class="mt-2">
+                        <button type="submit" class="btn btn-outline-danger w-100" @(Model.Cart?.TotalItems > 0 ? null : "disabled")><i class="fas fa-trash me-1"></i> Clear Cart</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+}
+
+
+
+@* Related games footer section (full width, after main cart content) *@
+<div class="container py-4 border-top mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">You may also like</h5>
+        @if (Model.RelatedGames != null && Model.RelatedGames.IsSuccess && Model.RelatedGames.TotalPages > 1)
+        {
+            <div class="btn-group">
+                <a class="btn btn-sm btn-outline-primary @(Model.RelatedGames.HasPrevious ? string.Empty : "disabled")" asp-page="/Player/Cart" asp-route-RelatedPage="@(Model.RelatedGames.CurrentPage - 1)"><i class="fas fa-chevron-left"></i></a>
+                <a class="btn btn-sm btn-outline-primary @(Model.RelatedGames.HasNext ? string.Empty : "disabled")" asp-page="/Player/Cart" asp-route-RelatedPage="@(Model.RelatedGames.CurrentPage + 1)"><i class="fas fa-chevron-right"></i></a>
+            </div>
+        }
+    </div>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3">
+        @if (Model.RelatedGames != null && Model.RelatedGames.IsSuccess && Model.RelatedGames.Items.Any())
+        {
+            foreach (var g in Model.RelatedGames.Items)
+            {
+                var baseUrl = Model.Config["BaseUrl"] ?? string.Empty;
+                var img = string.IsNullOrEmpty(g.ImagePath) ? string.Empty : ($"{baseUrl}{g.ImagePath}");
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm">
+                        @if (!string.IsNullOrEmpty(img))
+                        {
+                            <a asp-page="/Player/GameDetail" asp-route-id="@g.Id"><img src="@img" class="card-img-top" style="height:160px;object-fit:cover;border-radius:8px 8px 0 0;" alt="@g.Title" /></a>
+                        }
+                        <div class="card-body">
+                            <h6 class="mb-1 text-truncate"><a class="text-decoration-none" asp-page="/Player/GameDetail" asp-route-id="@g.Id">@g.Title</a></h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">$@g.Price.ToString("F2")</span>
+                                <form method="post" asp-page-handler="AddToCart">
+                                    <input type="hidden" name="gameId" value="@g.Id" />
+                                    <button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-cart-plus"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12 text-center text-muted py-3">No related games yet.</div>
+        }
+    </div>
+</div>

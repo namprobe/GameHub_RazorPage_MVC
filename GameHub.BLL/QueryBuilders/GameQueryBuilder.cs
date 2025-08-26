@@ -60,11 +60,29 @@ public class GameQueryBuilder : BaseQueryBuilder<Game, GameFilter>
         {
             predicate = predicate.CombineAnd(x => x.DeveloperId == filter.DeveloperId.Value);
         }
+        // Multi DeveloperIds
+        if (filter.DeveloperIds != null && filter.DeveloperIds.Any())
+        {
+            var devIds = filter.DeveloperIds.ToList();
+            predicate = predicate.CombineAnd(x => x.DeveloperId.HasValue && devIds.Contains(x.DeveloperId.Value));
+        }
         
         // Filter theo CategoryId
         if (filter.CategoryId.HasValue)
         {
             predicate = predicate.CombineAnd(x => x.CategoryId == filter.CategoryId.Value);
+        }
+        // Multi CategoryIds
+        if (filter.CategoryIds != null && filter.CategoryIds.Any())
+        {
+            var catIds = filter.CategoryIds.ToList();
+            predicate = predicate.CombineAnd(x => x.CategoryId.HasValue && catIds.Contains(x.CategoryId.Value));
+        }
+        // Exclude specific GameIds if provided
+        if (filter.GameIds != null && filter.GameIds.Any())
+        {
+            var gids = filter.GameIds.ToList();
+            predicate = predicate.CombineAnd(x => !gids.Contains(x.Id));
         }
         
         return predicate;

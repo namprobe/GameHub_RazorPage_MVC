@@ -1,0 +1,142 @@
+@page "/Player/Game/{id:int}"
+@model GameHub.WebApp.Pages.Player.GameDetailModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
+@{
+    ViewData["Title"] = Model.Game?.Title ?? "Game Detail";
+    Layout = "_Layout";
+    string baseUrl = Config["BaseUrl"] ?? string.Empty;
+}
+
+<style>
+    .detail-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 0; margin-bottom: 24px; }
+    .detail-card { background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 1px solid #f8f9fa; }
+    .detail-image { width: 100%; height: 320px; object-fit: cover; border-radius: 12px; }
+    .game-meta .badge { margin-right: 8px; }
+    .related .game-card { background: white; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 1px solid #f8f9fa; overflow: hidden; }
+    .related .game-card-image { height: 160px; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .related .game-card-image img { width: 100%; height: 100%; object-fit: cover; }
+</style>
+
+<section class="detail-hero">
+    <div class="container">
+        <h1 class="h3 mb-0"><i class="fas fa-gamepad me-2"></i>@(Model.Game?.Title ?? "Game Detail")</h1>
+    </div>
+ </section>
+
+<div class="container mb-4">
+    @if (Model.Game == null)
+    {
+        <div class="alert alert-danger">Game not found.</div>
+    }
+    else
+    {
+        var imgSrc = string.IsNullOrEmpty(Model.Game.ImagePath) ? null : ($"{baseUrl}{Model.Game.ImagePath}");
+        <div class="detail-card p-4">
+            <div class="row g-3 align-items-start">
+                <div class="col-md-5">
+                    @if (!string.IsNullOrEmpty(imgSrc))
+                    {
+                        <img class="detail-image" src="@imgSrc" alt="@Model.Game.Title" />
+                    }
+                    else
+                    {
+                        <div class="detail-image d-flex align-items-center justify-content-center" style="background:#f0f2f5;">
+                            <div style="font-size:4rem; opacity:.3;">🎮</div>
+                        </div>
+                    }
+                </div>
+                <div class="col-md-7">
+                    <h2 class="h4 mb-2">@Model.Game.Title</h2>
+                    <div class="text-muted mb-2">
+                        <i class="fas fa-building me-1"></i>@(Model.Game.Developer?.DeveloperName ?? "Unknown Developer")
+                        <span class="mx-2">•</span>
+                        <span class="badge bg-primary">@(Model.Game.Category?.CategoryName ?? "No Category")</span>
+                    </div>
+                    <p class="mb-3">@Model.Game.Description</p>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="h5 mb-0 text-danger">$@Model.Game.Price.ToString("F2")</span>
+                        <span class="badge @(Model.Game.IsActive ? "bg-success" : "bg-danger")">@(Model.Game.IsActive ? "Active" : "Inactive")</span>
+                        <span class="text-muted"><i class="fas fa-users me-1"></i>@Model.Game.RegistrationCount players</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        @if (!Model.IsCurrentGameInCart)
+                        {
+                            <form method="post" asp-page-handler="AddToCart">
+                                <input type="hidden" name="gameId" value="@Model.Game.Id" />
+                                <button class="btn btn-primary" type="submit"><i class="fas fa-cart-plus me-2"></i>Add to cart</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-secondary" asp-page="/Player/Cart"><i class="fas fa-shopping-cart me-2"></i>Go to cart</a>
+                        }
+                        <form method="post" asp-page-handler="RegisterNow">
+                            <button class="btn btn-outline-success" type="submit"><i class="fas fa-bolt me-2"></i>Register now</button>
+                        </form>
+                        <a class="btn btn-outline-secondary" asp-page="/Player/Games">Back to list</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <h3 class="h5 mb-0">You may also like</h3>
+            @if (Model.RelatedGames != null && Model.RelatedGames.IsSuccess && Model.RelatedGames.TotalPages > 1)
+            {
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-outline-primary @(Model.RelatedGames.HasPrevious ? string.Empty : "disabled")" asp-page="/Player/GameDetail" asp-route-id="@Model.Game.Id" asp-route-RelatedPage="@(Model.RelatedGames.CurrentPage - 1)"><i class="fas fa-chevron-left"></i></a>
+                    <a class="btn btn-sm btn-outline-primary @(Model.RelatedGames.HasNext ? string.Empty : "disabled")" asp-page="/Player/GameDetail" asp-route-id="@Model.Game.Id" asp-route-RelatedPage="@(Model.RelatedGames.CurrentPage + 1)"><i class="fas fa-chevron-right"></i></a>
+                </div>
+            }
+        </div>
+        <div class="row g-3 related">
+            @if (Model.RelatedGames != null && Model.RelatedGames.IsSuccess && Model.RelatedGames.Items.Any())
+            {
+                foreach (var g in Model.RelatedGames.Items)
+                {
+                    var rimg = string.IsNullOrEmpty(g.ImagePath) ? null : ($"{baseUrl}{g.ImagePath}");
+                    <div class="col-md-3 col-sm-6">
+                        <div class="game-card h-100">
+                            <div class="game-card-image">
+                                @if (!string.IsNullOrEmpty(rimg)) { <img src="@rimg" alt="@g.Title" /> } else { <div style="position:relative;z-index:2;">🎯</div> }
+                            </div>
+                            <div class="game-card-body p-3">
+                                <div class="fw-semibold text-truncate">@g.Title</div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span class="text-danger fw-bold">$@g.Price.ToString("F2")</span>
+                                    @if (!Model.RelatedInCartGameIds.Contains(g.Id))
+                                    {
+                                        <form method="post" asp-page-handler="AddToCart">
+                                            <input type="hidden" name="gameId" value="@g.Id" />
+                                            <button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-cart-plus"></i></button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary" asp-page="/Player/Cart"><i class="fas fa-shopping-cart"></i></a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center text-muted py-3">No related games yet.</div>
+            }
+        </div>
+
+        @if (Model.RelatedGames != null && Model.RelatedGames.IsSuccess && Model.RelatedGames.TotalPages > 1)
+        {
+            <div class="d-flex justify-content-end align-items-center mt-3">
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-outline-primary @(Model.RelatedGames.HasPrevious ? string.Empty : "disabled")" asp-page="/Player/GameDetail" asp-route-id="@Model.Game.Id" asp-route-RelatedPage="@(Model.RelatedGames.CurrentPage - 1)"><i class="fas fa-chevron-left"></i></a>
+                    <a class="btn btn-sm btn-outline-primary @(Model.RelatedGames.HasNext ? string.Empty : "disabled")" asp-page="/Player/GameDetail" asp-route-id="@Model.Game.Id" asp-route-RelatedPage="@(Model.RelatedGames.CurrentPage + 1)"><i class="fas fa-chevron-right"></i></a>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+

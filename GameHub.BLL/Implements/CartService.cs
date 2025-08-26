@@ -1,11 +1,12 @@
-using System.Security.Cryptography.X509Certificates;
 using AutoMapper;
 using GameHub.BLL.DTOs.Cart;
 using GameHub.BLL.Helpers;
 using GameHub.BLL.Interfaces;
 using GameHub.BLL.Models;
+using GameHub.DAL.Common;
 using GameHub.DAL.Entities;
 using GameHub.DAL.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace GameHub.BLL.Implements;
@@ -17,7 +18,11 @@ public class CartService : ICartService
     private readonly CurrentUserHelper _currentUserHelper;
     private readonly ILogger<CartService> _logger;
 
-    public CartService(IUnitOfWork unitOfWork, IMapper mapper, CurrentUserHelper currentUserHelper, ILogger<CartService> logger)
+    public CartService(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        CurrentUserHelper currentUserHelper,
+        ILogger<CartService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
@@ -25,129 +30,184 @@ public class CartService : ICartService
         _logger = logger;
     }
 
-    public async Task<Result> AddToCartAsync(CartItemRequest request)
+    // ---------------------- Helper ----------------------
+    private async Task<(Result<Player> Result, Player? Player)> GetValidatedPlayerAsync()
+    {
+        var result = await ValidateCurrentPlayerAsync();
+        return (result, result.IsSuccess ? result.Data : null);
+    }
+
+    private async Task<Result<Player>> ValidateCurrentPlayerAsync()
+    {
+        if (!await _currentUserHelper.IsCurrentUserPlayerAsync())
+            return Result<Player>.Error("Not authorized");
+
+        var currentUserId = _currentUserHelper.GetCurrentUserId();
+        var currentPlayer = await _unitOfWork.PlayerRepository
+            .GetFirstOrDefaultAsync(x => x.UserId == currentUserId, x => x.Cart);
+
+        return currentPlayer == null
+            ? Result<Player>.Error("Player not found")
+            : Result<Player>.Success(currentPlayer);
+    }
+
+    // ---------------------- Add ----------------------
+    public async Task<Result> AddToCartAsync(int gameId)
     {
         try
         {
-            var validateResult = await ValidateCurrentPlayerAsync();
-            if (!validateResult.IsSuccess)
-            {
-                return Result.Error(validateResult.Message ?? "Error adding to cart");
-            }
+            var (validation, player) = await GetValidatedPlayerAsync();
+            if (!validation.IsSuccess || player == null)
+                return Result.Error(validation.Message ?? "Error adding to cart");
 
-            var currentPlayer = validateResult.Data;
+            var cart = player.Cart;
+            if (cart == null) return Result.Error("Cart not found");
 
-            var cart = currentPlayer.Cart;
-            if (cart == null)
-            {
-                return Result.Error("Cart not found");
-            }
-
-            var isGameExist = await _unitOfWork.GameRepository.AnyAsync(x => x.Id == request.GameId);
-            if (!isGameExist)
-            {
+            if (!await _unitOfWork.GameRepository.AnyAsync(x => x.Id == gameId))
                 return Result.Error("Game not found");
-            }
 
-            var isAllowAdd = await _unitOfWork.CartItemRepository.AnyAsync(x => x.CartId == cart.Id && x.GameId == request.GameId);
-            if (isAllowAdd)
-            {
+            if (await _unitOfWork.CartItemRepository.AnyAsync(x => x.CartId == cart.Id && x.GameId == gameId))
                 return Result.Error("Game already in cart");
-            }
-            var cartItem = _mapper.Map<CartItem>(request);
-            try
-            {
-                await _unitOfWork.BeginTransactionAsync();
-                await _unitOfWork.CartItemRepository.AddAsync(cartItem);
-                await _unitOfWork.CommitTransactionAsync();
-            }
-            catch 
-            {
-                await _unitOfWork.RollbackTransactionAsync();
-                throw;
-            }
+
+            var cartItem = new CartItem { CartId = cart.Id, GameId = gameId };
+            cartItem.InitializeAudit(_currentUserHelper.GetCurrentUserId());
+
+            await _unitOfWork.CartItemRepository.AddAsync(cartItem);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Success("Game added to cart successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding to cart");
-            return Result.Error("Error adding to cart");
+            _logger.LogError(ex,
+                "Error adding game {GameId} to cart for user {UserId}",
+                gameId, _currentUserHelper.GetCurrentUserId());
+            return Result.Error("Unexpected error occurred");
         }
     }
 
-    public Task<Result> ClearCartAsync()
-    {
-        throw new NotImplementedException();
-    }
-
-    private async Task<Result<Player>> ValidateCurrentPlayerAsync()
-    {
-        var isValid = await _currentUserHelper.IsCurrentUserPlayerAsync();
-        if (!isValid)
-        {
-            return Result<Player>.Error("Not authorized");
-        }
-
-        var currentUserId = _currentUserHelper.GetCurrentUserId();
-
-        var currentPlayer = await _unitOfWork.PlayerRepository.GetFirstOrDefaultAsync(x => x.UserId == currentUserId, x => x.Cart);
-        if (currentPlayer == null)
-        {
-            return Result<Player>.Error("Player not found");
-        }
-
-        return Result<Player>.Success(currentPlayer);
-    }
-
-    public async Task<Result<CartResponse>> GetCurrentCartAsync()
+    // ---------------------- Remove ----------------------
+    public async Task<Result> RemoveFromCartAsync(int gameId)
     {
         try
         {
-            var validateResult = await ValidateCurrentPlayerAsync();
-            if (!validateResult.IsSuccess)
-            {
-                return Result<CartResponse>.Error(validateResult.Message ?? "Error getting current cart");
-            }
+            var (validation, player) = await GetValidatedPlayerAsync();
+            if (!validation.IsSuccess || player == null)
+                return Result.Error(validation.Message ?? "Error removing from cart");
 
-            var currentPlayer = validateResult.Data;
+            var cart = player.Cart;
+            if (cart == null) return Result.Error("Cart not found");
 
-            var cart = currentPlayer.Cart;
+            if (!await _unitOfWork.GameRepository.AnyAsync(x => x.Id == gameId))
+                return Result.Error("Game not found");
 
-            //If cart is null, create a new cart
-            if (cart == null)
-            {
-                cart = new Cart
-                {
-                    PlayerId = currentPlayer.Id,
-                };
-                try
-                {
-                    await _unitOfWork.CartRepository.AddAsync(cart);
-                    await _unitOfWork.SaveChangesAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating cart");
-                    throw;
-                }
-            }
+            var cartItem = await _unitOfWork.CartItemRepository
+                .GetFirstOrDefaultAsync(x => x.CartId == cart.Id && x.GameId == gameId);
 
-            var cartItems = await _unitOfWork.CartItemRepository.GetAllAsync(x => x.CartId == cart.Id, x => x.Game);
-            var cartResponse = _mapper.Map<CartResponse>(cart);
-            cartResponse.CartItems = _mapper.Map<List<CartItemResponse>>(cartItems);
+            if (cartItem == null)
+                return Result.Error("Game not in cart");
 
-            return Result<CartResponse>.Success(cartResponse);
+            _unitOfWork.CartItemRepository.Delete(cartItem);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Result.Success("Game removed from cart successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting current cart");
-            return Result<CartResponse>.Error("Error getting current cart");
+            _logger.LogError(ex,
+                "Error removing game {GameId} from cart for user {UserId}",
+                gameId, _currentUserHelper.GetCurrentUserId());
+            return Result.Error("Unexpected error occurred");
         }
     }
 
-    public Task<Result> RemoveFromCartAsync(int gameId)
+    // ---------------------- Clear ----------------------
+    public async Task<Result> ClearCartAsync()
     {
-        throw new NotImplementedException();
+        try
+        {
+            var (validation, player) = await GetValidatedPlayerAsync();
+            if (!validation.IsSuccess || player == null)
+                return Result.Error(validation.Message ?? "Error clearing cart");
+
+            var cart = player.Cart;
+            if (cart == null) return Result.Error("Cart not found");
+
+            var cartItems = await _unitOfWork.CartItemRepository.FindAsync(x => x.CartId == cart.Id);
+
+            if (!cartItems.Any())
+                return Result.Success("Cart is already empty"); 
+
+            _unitOfWork.CartItemRepository.DeleteRange(cartItems);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Result.Success("Cart cleared successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error clearing cart for user {UserId}",
+                _currentUserHelper.GetCurrentUserId());
+            return Result.Error("Unexpected error occurred");
+        }
+    }
+
+    // ---------------------- Get Cart ----------------------
+    public async Task<Result<CartResponse>> GetCurrentCartAsync(BasePaginationFilter filter)
+    {
+        try
+        {
+            var (validation, player) = await GetValidatedPlayerAsync();
+            if (!validation.IsSuccess || player == null)
+                return Result<CartResponse>.Error(validation.Message ?? "Error getting cart");
+
+            var cart = player.Cart;
+
+            if (cart == null)
+            {
+                // create new cart safely
+                cart = new Cart { PlayerId = player.Id };
+                cart.InitializeAudit(_currentUserHelper.GetCurrentUserId());
+
+                await _unitOfWork.CartRepository.AddAsync(cart);
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            var (cartItems, totalItems) = await _unitOfWork.CartItemRepository.GetPagedAsync(
+                filter.Page,
+                filter.PageSize,
+                x => x.CartId == cart.Id,
+                x => x.CreatedAt!,
+                false,//sort by created at
+                x => x.Game
+            );
+
+            var totalPrice = await _unitOfWork.CartItemRepository.GetQueryable()
+                .Where(x => x.CartId == cart.Id)
+                .SumAsync(x => x.Game.Price);
+
+            // Use AutoMapper profile for Cart -> CartResponse and items
+            var response = _mapper.Map<CartResponse>(cart);
+            // Manual business fields computed from repositories, not mapper
+            response.TotalItems = totalItems;
+            response.TotalPrice = totalPrice;
+            response.CartItems = _mapper.Map<List<CartItemResponse>>(cartItems);
+
+            return Result<CartResponse>.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error getting cart for user {UserId}",
+                _currentUserHelper.GetCurrentUserId());
+            return Result<CartResponse>.Error("Unexpected error occurred");
+        }
+    }
+
+    public async Task<bool> IsInCurrentCartAsync(int gameId)
+    {
+        var (validation, player) = await GetValidatedPlayerAsync();
+        if (!validation.IsSuccess || player?.Cart == null) return false;
+        return await _unitOfWork.CartItemRepository.AnyAsync(x => x.CartId == player.Cart.Id && x.GameId == gameId);
     }
 }

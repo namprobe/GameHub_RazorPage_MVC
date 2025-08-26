@@ -1,6 +1,7 @@
 using GameHub.BLL.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Configuration;
 
 namespace GameHub.WebApp.Pages.Player
 {
@@ -41,6 +42,14 @@ namespace GameHub.WebApp.Pages.Player
 			}
 
 			return null; // Validation passed
+		}
+
+		protected string BuildImageUrl(string? relativeOrAbsolutePath, IConfiguration configuration)
+		{
+			if (string.IsNullOrWhiteSpace(relativeOrAbsolutePath)) return string.Empty;
+			if (relativeOrAbsolutePath.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return relativeOrAbsolutePath;
+			var baseUrl = configuration["BaseUrl"] ?? string.Empty;
+			return $"{(string.IsNullOrEmpty(baseUrl) ? string.Empty : baseUrl.TrimEnd('/'))}/{relativeOrAbsolutePath.TrimStart('/')}";
 		}
 	}
 }

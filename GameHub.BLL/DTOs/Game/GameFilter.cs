@@ -11,4 +11,8 @@ public class GameFilter : BasePaginationFilter
     public DateOnly? ToReleaseDate { get; set; }
     public int? DeveloperId { get; set; }
     public int? CategoryId { get; set; }
+    // Multi-id filters for related queries
+    public IEnumerable<int>? DeveloperIds { get; set; }
+    public IEnumerable<int>? CategoryIds { get; set; }
+    public IEnumerable<int>? GameIds { get; set; }
 }

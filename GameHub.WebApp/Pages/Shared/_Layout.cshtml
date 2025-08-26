@@ -47,9 +47,11 @@
         .footer a { color: rgba(255, 255, 255, 0.8); text-decoration: none; }
         .footer a:hover { color: white; }
     </style>
-</head>
+ </head>
 @inject GameHub.BLL.Helpers.CurrentUserHelper CurrentUser
 @inject Microsoft.Extensions.Configuration.IConfiguration Config
+@inject GameHub.BLL.Interfaces.ICartService CartService
+@inject GameHub.BLL.Interfaces.IAuthService AuthService
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
@@ -108,21 +110,100 @@
                         }
                         else
                         {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    @{ var avatarPath = Context.Request.Cookies["avatarPath"]; }
-                                    @if (!string.IsNullOrEmpty(avatarPath))
+                            // Cart preview (top-right)
+                            var cartPreviewResult = await CartService.GetCurrentCartAsync(new GameHub.BLL.Models.BasePaginationFilter { Page = 1, PageSize = 4 });
+                            var cartPreview = cartPreviewResult.IsSuccess ? cartPreviewResult.Data : null;
+                            <li class="nav-item dropdown me-2">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="cartDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-shopping-cart me-1"></i>
+                                    @if (cartPreview != null && cartPreview.TotalItems > 0)
                                     {
-                                        var baseUrl = Config["BaseUrl"] ?? string.Empty;
-                                        var src = avatarPath.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? avatarPath : ($"{(string.IsNullOrEmpty(baseUrl) ? string.Empty : baseUrl.TrimEnd('/'))}/{avatarPath.TrimStart('/')}");
-                                        <img src="@src" alt="avatar" class="nav-avatar me-1" />
+                                        <span class="badge bg-danger">@cartPreview.TotalItems</span>
+                                    }
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="cartDropdown" style="min-width: 320px;">
+                                    @if (cartPreview == null || cartPreview.TotalItems == 0)
+                                    {
+                                        <li class="px-2 py-2 text-muted">Your cart is empty</li>
                                     }
                                     else
                                     {
-                                        <i class="fas fa-user-circle me-1"></i>
+                                        foreach (var item in cartPreview.CartItems)
+                                        {
+                                            var baseUrl = Config["BaseUrl"] ?? string.Empty;
+                                            var img = string.IsNullOrEmpty(item.GameImagePath)
+                                                ? string.Empty
+                                                : ($"{baseUrl}{item.GameImagePath}");
+                                            <li class="dropdown-item d-flex align-items-center">
+                                                <a class="d-flex align-items-center text-decoration-none text-reset w-100" asp-page="/Player/GameDetail" asp-route-id="@item.GameId">
+                                                    @if (!string.IsNullOrEmpty(img))
+                                                    {
+                                                        <img src="@img" alt="@item.GameTitle" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" class="me-2" />
+                                                    }
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-semibold text-truncate" style="max-width:180px">@item.GameTitle</div>
+                                                        <div class="text-muted" style="font-size: 0.85rem;">@item.Price.ToString("C")</div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        }
+                                        if (cartPreview.TotalItems > cartPreview.CartItems.Count)
+                                        {
+                                            <li><hr class="dropdown-divider" /></li>
+                                            <li class="px-3 py-1 text-muted" style="font-size: 0.9rem;">and @(cartPreview.TotalItems - cartPreview.CartItems.Count) more...</li>
+                                        }
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li class="px-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-semibold">Total:</span>
+                                                <span class="fw-bold">@cartPreview.TotalPrice.ToString("C")</span>
+                                            </div>
+                                        </li>
+                                        <li class="px-2 pt-2">
+                                            <a class="btn btn-primary w-100" asp-page="/Player/Cart">Go to cart</a>
+                                        </li>
                                     }
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @{ 
+                                        var profileRes = await AuthService.GetProfileAsync();
+                                        var navBaseUrl = Config["BaseUrl"] ?? string.Empty;
+                                        var avatarPath = profileRes.IsSuccess ? profileRes.Data?.AvatarPath : null;
+                                        var username = profileRes.IsSuccess ? profileRes.Data?.Username : null;
+                                        var src = string.IsNullOrEmpty(avatarPath) ? string.Empty : $"{navBaseUrl}{avatarPath}";
+                                    }
+                                    @if (!string.IsNullOrEmpty(src))
+                                    {
+                                        <img src="@src" alt="avatar" class="nav-avatar me-2" />
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-user-circle me-2"></i>
+                                    }
+                                    <span class="d-none d-sm-inline text-white-50">@username</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                                    @{
+                                        var p = await AuthService.GetProfileAsync();
+                                        var profBaseUrl = Config["BaseUrl"] ?? string.Empty;
+                                        var pAvatar = p.IsSuccess ? p.Data?.AvatarPath : null;
+                                        var pName = p.IsSuccess ? p.Data?.Username : null;
+                                        var pSrc = string.IsNullOrEmpty(pAvatar) ? string.Empty : $"{profBaseUrl}{pAvatar}";
+                                    }
+                                    <li class="px-3 py-2 d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(pSrc))
+                                        {
+                                            <img src="@pSrc" alt="avatar" class="me-2" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-user-circle me-2"></i>
+                                        }
+                                        <span class="fw-semibold">@pName</span>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
                                     <li><a class="dropdown-item" asp-page="/Player/Profile"><i class="fas fa-id-card me-2"></i>View Profile</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>

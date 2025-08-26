@@ -26,9 +26,6 @@ namespace GameHub.WebApp.Pages
 
         public void OnGet()
         {
-            // Clear any cached messages
-            ErrorMessage = null;
-            SuccessMessage = null;
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -46,11 +43,9 @@ namespace GameHub.WebApp.Pages
                 this.SetSuccessMessage(result.Message ?? "Registration successful! Please login to continue.");
                 return RedirectToPage("/Login");
             }
-            else
-            {
-                this.SetErrorMessage(result.Message ?? "Registration failed. Please try again.");
-                return Page();
-            }
+            
+            this.SetErrorMessage(result.Message ?? "Registration failed. Please try again.");
+            return Page();
         }
     }
 }

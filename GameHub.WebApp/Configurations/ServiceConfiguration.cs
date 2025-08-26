@@ -40,6 +40,7 @@ public static class ServiceConfiguration
             mc.AddProfile(new GameCategoryMappingProfile());
             mc.AddProfile(new DeveloperMappingProfile());
             mc.AddProfile(new GameMappingProfile());
+            mc.AddProfile(new CartMappingProfile());
         });
         IMapper mapper = mapperConfig.CreateMapper();
         services.AddSingleton(mapper);

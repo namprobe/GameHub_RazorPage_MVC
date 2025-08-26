@@ -8,7 +8,7 @@ public partial class Game : BaseEntity
 {
     public string Title { get; set; } = null!;
 
-    public decimal Price { get; set; }
+    public decimal Price { get; set; } = 0;
 
     public DateOnly? ReleaseDate { get; set; }
 

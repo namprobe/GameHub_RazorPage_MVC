@@ -5,6 +5,7 @@ using GameHub.BLL.Interfaces;
 using GameHub.BLL.Models;
 using Microsoft.AspNetCore.Mvc;
 using GameHub.BLL.Helpers;
+using GameHub.WebApp.Helpers;
 
 namespace GameHub.WebApp.Pages.Player
 {
@@ -13,16 +14,19 @@ namespace GameHub.WebApp.Pages.Player
 		private readonly IGameService _gameService;
 		private readonly IGameCategoryService _gameCategoryService;
 		private readonly IDeveloperService _developerService;
+        private readonly ICartService _cartService;
 
 		public IndexModel(
 			IGameService gameService,
 			IGameCategoryService gameCategoryService,
 			IDeveloperService developerService,
-			CurrentUserHelper currentUserHelper) : base(currentUserHelper)
+			CurrentUserHelper currentUserHelper,
+			ICartService cartService) : base(currentUserHelper)
 		{
 			_gameService = gameService;
 			_gameCategoryService = gameCategoryService;
 			_developerService = developerService;
+            _cartService = cartService;
 		}
 
 		// Top registered games
@@ -48,7 +52,7 @@ namespace GameHub.WebApp.Pages.Player
 			var topGamesFilter = new GameFilter
 			{
 				Page = 1,
-				PageSize = 6,
+				PageSize = 3,
 				SortBy = "RegistrationCount",
 				IsAscending = false,
 				IsActive = true
@@ -59,7 +63,7 @@ namespace GameHub.WebApp.Pages.Player
 			var latestGamesFilter = new GameFilter
 			{
 				Page = 1,
-				PageSize = 6,
+				PageSize = 3,
 				SortBy = "CreatedAt",
 				IsAscending = false, // DESC để lấy mới nhất
 				IsActive = true
@@ -70,7 +74,7 @@ namespace GameHub.WebApp.Pages.Player
 			var bestPriceFilter = new GameFilter
 			{
 				Page = 1,
-				PageSize = 6,
+				PageSize = 3,
 				SortBy = "Price",
 				IsAscending = true, // ASC để lấy giá thấp nhất
 				IsActive = true
@@ -92,6 +96,18 @@ namespace GameHub.WebApp.Pages.Player
 			}
 
 			return Page();
+		}
+
+		public async Task<IActionResult> OnPostAddToCartAsync(int gameId)
+		{
+			var access = await ValidatePlayerAccessAsync();
+			if (access != null) return access;
+
+			var result = await _cartService.AddToCartAsync(gameId);
+			if (result.IsSuccess) this.SetSuccessMessage(result.Message ?? "Added to cart");
+			else this.SetErrorMessage(result.Message ?? "Failed to add to cart");
+
+			return RedirectToPage();
 		}
 	}
 }

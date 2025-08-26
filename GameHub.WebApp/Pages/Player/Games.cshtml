@@ -369,6 +369,7 @@
                 var imgSrc = string.IsNullOrEmpty(game.ImagePath) ? null : ($"{baseUrl}{game.ImagePath}");
                 <div class="col-lg-4 col-md-6">
                     <div class="game-card">
+                        <a asp-page="/Player/GameDetail" asp-route-id="@game.Id" class="text-decoration-none text-reset">
                         <div class="game-card-image">
                             @if (!string.IsNullOrEmpty(imgSrc))
                             {
@@ -379,8 +380,9 @@
                                 <div style="position: relative; z-index: 2;">🎮</div>
                             }
                         </div>
+                        </a>
                         <div class="game-card-body">
-                            <h5 class="game-title">@game.Title</h5>
+                            <h5 class="game-title"><a class="text-decoration-none" asp-page="/Player/GameDetail" asp-route-id="@game.Id">@game.Title</a></h5>
                             <div class="game-meta">
                                 <span class="game-price">$@game.Price.ToString("F2")</span>
                                 <span class="game-category">@(game.Category?.CategoryName ?? "No Category")</span>
@@ -393,6 +395,16 @@
                                 <span class="game-status @(game.IsActive ? "status-active" : "status-inactive")">
                                     @(game.IsActive ? "Active" : "Inactive")
                                 </span>
+                            </div>
+                            <div class="mt-3 d-flex gap-2">
+                                <form method="post" asp-page-handler="AddToCart">
+                                    <input type="hidden" name="gameId" value="@game.Id" />
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-cart-plus me-1"></i>Add to cart
+                                    </button>
+                                </form>
+                                <a class="btn btn-sm btn-outline-secondary" asp-page="/Player/Cart">Go to cart</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-page="/Player/GameDetail" asp-route-id="@game.Id">Details</a>
                             </div>
                         </div>
                     </div>
@@ -466,3 +478,5 @@
         </div>
     }
 </div>
+
+    

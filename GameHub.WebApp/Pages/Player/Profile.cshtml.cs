@@ -28,7 +28,7 @@ namespace GameHub.WebApp.Pages.Player
 			var result = await _authService.GetProfileAsync();
 			if (!result.IsSuccess)
 			{
-				ToastHelper.SetErrorMessage(this, result.Message);
+				ToastHelper.SetErrorMessage(this, result.Message ?? "Failed to load profile");
 				return RedirectToPage("/Player/Index");
 			}
 
@@ -52,12 +52,13 @@ namespace GameHub.WebApp.Pages.Player
 			var update = await _authService.UpdateProfileAsync(Form);
 			if (!update.IsSuccess)
 			{
-				ToastHelper.SetErrorMessage(this, update.Message);
+				ToastHelper.SetErrorMessage(this, update.Message ?? "Failed to update profile");
 				await LoadProfileAsync();
 				return Page();
 			}
 
-			ToastHelper.SetSuccessMessage(this, update.Message);
+			ToastHelper.SetSuccessMessage(this, update.Message ?? "Profile updated successfully");
+			// Refresh header by redirecting back to profile; _Layout will re-fetch profile for avatar/username
 			return RedirectToPage("/Player/Profile");
 		}
 
