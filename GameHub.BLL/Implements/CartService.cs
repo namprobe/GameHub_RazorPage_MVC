@@ -51,6 +51,14 @@ public class CartService : ICartService
             : Result<Player>.Success(currentPlayer);
     }
 
+    private async Task<bool> IsGameOwnedByPlayerAsync(int gameId, int playerId)
+    {
+        return await _unitOfWork.GameRegistrationDetailRepository.AnyAsync(x => 
+            x.GameId == gameId && 
+            x.GameRegistration.PlayerId == playerId &&
+            x.GameRegistration.Payment.PaymentStatus == DAL.Enums.PayStatusEnum.Success);
+    }
+
     // ---------------------- Add ----------------------
     public async Task<Result> AddToCartAsync(int gameId)
     {
@@ -65,6 +73,10 @@ public class CartService : ICartService
 
             if (!await _unitOfWork.GameRepository.AnyAsync(x => x.Id == gameId))
                 return Result.Error("Game not found");
+
+            // Check if player already owns this game
+            if (await IsGameOwnedByPlayerAsync(gameId, player.Id))
+                return Result.Error("You already own this game");
 
             if (await _unitOfWork.CartItemRepository.AnyAsync(x => x.CartId == cart.Id && x.GameId == gameId))
                 return Result.Error("Game already in cart");
@@ -209,6 +221,13 @@ public class CartService : ICartService
         var (validation, player) = await GetValidatedPlayerAsync();
         if (!validation.IsSuccess || player?.Cart == null) return false;
         return await _unitOfWork.CartItemRepository.AnyAsync(x => x.CartId == player.Cart.Id && x.GameId == gameId);
+    }
+
+    public async Task<bool> IsGameOwnedByCurrentPlayerAsync(int gameId)
+    {
+        var (validation, player) = await GetValidatedPlayerAsync();
+        if (!validation.IsSuccess || player == null) return false;
+        return await IsGameOwnedByPlayerAsync(gameId, player.Id);
     }
 
     public async Task<Result<List<BLL.DTOs.Cart.CartItemResponse>>> GetAllCurrentCartItemsAsync()

@@ -1,3 +1,12 @@
+# Sensitive configuration files
+appsettings.json
+appsettings.*.json
+!appsettings.example.json
+!appsettings.Development.json
+
+# User secrets
+secrets.json
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -180,14 +189,6 @@ csx/
 # Microsoft Azure Emulator
 ecf/
 rcf/
-
-# Configuration files with sensitive data
-appsettings.json
-appsettings.Production.json
-appsettings.Staging.json
-# Keep example and development files
-!appsettings.example.json
-!appsettings.Development.json
 
 # Windows Store app package directories and files
 AppPackages/

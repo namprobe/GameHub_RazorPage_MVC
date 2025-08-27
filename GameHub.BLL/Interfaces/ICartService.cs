@@ -11,4 +11,5 @@ public interface ICartService
     Task<Result> RemoveFromCartAsync(int gameId);
     Task<Result> ClearCartAsync();
     Task<bool> IsInCurrentCartAsync(int gameId);
+    Task<bool> IsGameOwnedByCurrentPlayerAsync(int gameId);
 }
