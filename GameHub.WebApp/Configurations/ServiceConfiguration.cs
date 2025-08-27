@@ -41,6 +41,7 @@ public static class ServiceConfiguration
             mc.AddProfile(new DeveloperMappingProfile());
             mc.AddProfile(new GameMappingProfile());
             mc.AddProfile(new CartMappingProfile());
+            mc.AddProfile(new GameRegistrationMappingProfile());
         });
         IMapper mapper = mapperConfig.CreateMapper();
         services.AddSingleton(mapper);
@@ -71,11 +72,13 @@ public static class ServiceConfiguration
         services.AddScoped<SessionHelper>();
         services.AddScoped<CurrentUserHelper>();
         services.AddScoped<FileUploadHelper>();
+        services.AddScoped<IVNPayHelper, VNPayHelper>();
 
         // Add Query Builders
         services.AddScoped<GameCategoryQueryBuilder>();
         services.AddScoped<GameQueryBuilder>();
         services.AddScoped<DeveloperQueryBuilder>();
+        services.AddScoped<GameRegistrationQueryBuilder>();
 
         // Add các Service cụ thể
         services.AddScoped<IGameCategoryService, GameCategoryService>();
@@ -83,6 +86,7 @@ public static class ServiceConfiguration
         services.AddScoped<IDeveloperService, DeveloperService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICartService, CartService>();
+        services.AddScoped<IGameRegistrationService, GameRegistrationService>();
         
         return services;
     }

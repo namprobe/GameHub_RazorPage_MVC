@@ -1,0 +1,24 @@
+@page "/vnpay/return"
+@model GameHub.WebApp.Pages.VnPayReturnModel
+@{
+    ViewData["Title"] = "Payment Processing";
+}
+
+<div class="container py-5">
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Processing payment result...</span>
+        </div>
+        <div class="mt-3 text-muted">Processing your payment result...</div>
+        <div class="mt-2 small text-muted">Please wait while we redirect you.</div>
+    </div>
+</div>
+
+<script>
+    // Add a small delay for better UX before processing starts
+    setTimeout(function() {
+        document.querySelector('.text-muted').textContent = 'Redirecting you now...';
+    }, 1000);
+</script>
+
+

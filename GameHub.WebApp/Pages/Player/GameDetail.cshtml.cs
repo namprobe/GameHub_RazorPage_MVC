@@ -88,8 +88,8 @@ namespace GameHub.WebApp.Pages.Player
         {
             var access = await ValidatePlayerAccessAsync();
             if (access != null) return access;
-            this.SetInfoMessage("Register feature will be implemented soon.");
-            return RedirectToPage(new { id = Id, RelatedPage });
+            // Go to checkout with single game
+            return RedirectToPage("/Player/Checkout", new { GameId = Id });
         }
     }
 }

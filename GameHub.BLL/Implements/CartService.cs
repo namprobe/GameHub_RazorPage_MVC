@@ -210,4 +210,31 @@ public class CartService : ICartService
         if (!validation.IsSuccess || player?.Cart == null) return false;
         return await _unitOfWork.CartItemRepository.AnyAsync(x => x.CartId == player.Cart.Id && x.GameId == gameId);
     }
+
+    public async Task<Result<List<BLL.DTOs.Cart.CartItemResponse>>> GetAllCurrentCartItemsAsync()
+    {
+        try
+        {
+            var (validation, player) = await GetValidatedPlayerAsync();
+            if (!validation.IsSuccess || player?.Cart == null)
+                return Result<List<BLL.DTOs.Cart.CartItemResponse>>.Error(validation.Message ?? "Cart not found");
+
+            var cartItems = await _unitOfWork.CartItemRepository.FindAsync(x => x.CartId == player.Cart.Id, x => x.Game);
+            var items = cartItems.Select(ci => new BLL.DTOs.Cart.CartItemResponse
+            {
+                Id = ci.Id,
+                GameId = ci.GameId,
+                GameTitle = ci.Game.Title,
+                GameImagePath = ci.Game.ImagePath,
+                Price = ci.Game.Price,
+                CreatedAt = ci.CreatedAt
+            }).ToList();
+            return Result<List<BLL.DTOs.Cart.CartItemResponse>>.Success(items);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all current cart items for user {UserId}", _currentUserHelper.GetCurrentUserId());
+            return Result<List<BLL.DTOs.Cart.CartItemResponse>>.Error("Unexpected error occurred");
+        }
+    }
 }

@@ -1,0 +1,48 @@
+@page "/Player/Registration/{id:int}"
+@model GameHub.WebApp.Pages.Player.RegistrationDetailModel
+@{
+    ViewData["Title"] = "Registration Detail";
+}
+
+<div class="container py-4">
+    @if (Model.Data == null)
+    {
+        <div class="alert alert-danger">Registration not found.</div>
+    }
+    else
+    {
+        <h2 class="mb-3">Registration #@Model.Data.Id</h2>
+        <div class="mb-2 text-muted">Date: @Model.Data.RegistrationDate.ToString("g")</div>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Items</h5>
+                <ul class="list-group list-group-flush">
+                    @foreach (var i in Model.Data.GameRegistrationItems)
+                    {
+                        var baseUrl = Model.Config["BaseUrl"] ?? string.Empty;
+                        var fullImageUrl = string.IsNullOrWhiteSpace(i.GameImagePath) 
+                            ? "/images/placeholder-game.jpg" 
+                            : $"{baseUrl.TrimEnd('/')}/{i.GameImagePath.TrimStart('/')}";
+                        
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="@fullImageUrl" alt="@i.GameTitle" class="me-3" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" />
+                                <div>
+                                    <div class="fw-medium">@i.GameTitle</div>
+                                    <small class="text-muted">@i.GameCategory.CategoryName • @i.Developer.DeveloperName</small>
+                                </div>
+                            </div>
+                            <span class="fw-bold">@i.Price.ToString("C")</span>
+                        </li>
+                    }
+                </ul>
+                <div class="d-flex justify-content-end mt-3">
+                    <div class="fw-bold">Total: @Model.Data.Price.ToString("C")</div>
+                </div>
+            </div>
+        </div>
+        <a class="btn btn-outline-secondary" asp-page="/Player/Registrations">Back to list</a>
+    }
+</div>
+
+

@@ -12,4 +12,5 @@ public class GameRegistration : BaseEntity
     // Navigation properties
     public virtual Player Player { get; set; } = null!;
     public virtual ICollection<GameRegistrationDetail> GameRegistrationDetails { get; set; } = new List<GameRegistrationDetail>();
+    public virtual Payment Payment { get; set; } = null!;
 }

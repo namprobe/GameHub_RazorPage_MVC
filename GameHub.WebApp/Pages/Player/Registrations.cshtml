@@ -1,0 +1,52 @@
+@page "/Player/Registrations"
+@model GameHub.WebApp.Pages.Player.RegistrationsModel
+@{
+    ViewData["Title"] = "My Registrations";
+}
+
+<div class="container py-4">
+    <h2 class="mb-3">My Registrations</h2>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-3">
+            <input name="Search" value="@Model.Filter.Search" class="form-control" placeholder="Search title, dev, category" />
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="StartDate" value="@Model.Filter.StartDate?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="EndDate" value="@Model.Filter.EndDate?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-md-3 d-grid">
+            <button class="btn btn-primary" type="submit">Filter</button>
+        </div>
+    </form>
+
+    @if (!Model.PageData.IsSuccess || !Model.PageData.Items.Any())
+    {
+        <div class="alert alert-info">No registrations found.</div>
+    }
+    else
+    {
+        <div class="list-group mb-3">
+            @foreach (var r in Model.PageData.Items)
+            {
+                <a class="list-group-item list-group-item-action" asp-page="/Player/RegistrationDetail" asp-route-id="@r.Id">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">Registration #@r.Id</h6>
+                        <small class="text-muted">@r.RegistrationDate.ToString("g")</small>
+                    </div>
+                    <div class="small text-muted">Items: @r.GameRegistrationItems.Count(), Total: @r.Price.ToString("C")</div>
+                </a>
+            }
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a class="btn btn-outline-primary @(Model.PageData.HasPrevious ? string.Empty : "disabled")" asp-page="/Player/Registrations" asp-route-Filter.Page="@(Model.PageData.CurrentPage - 1)" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.Search="@Model.Filter.Search" asp-route-Filter.StartDate="@Model.Filter.StartDate?.ToString("yyyy-MM-dd")" asp-route-Filter.EndDate="@Model.Filter.EndDate?.ToString("yyyy-MM-dd")">Prev</a>
+            <div class="text-muted">Page @Model.PageData.CurrentPage / @Model.PageData.TotalPages</div>
+            <a class="btn btn-outline-primary @(Model.PageData.HasNext ? string.Empty : "disabled")" asp-page="/Player/Registrations" asp-route-Filter.Page="@(Model.PageData.CurrentPage + 1)" asp-route-Filter.PageSize="@Model.Filter.PageSize" asp-route-Filter.Search="@Model.Filter.Search" asp-route-Filter.StartDate="@Model.Filter.StartDate?.ToString("yyyy-MM-dd")" asp-route-Filter.EndDate="@Model.Filter.EndDate?.ToString("yyyy-MM-dd")">Next</a>
+        </div>
+    }
+</div>
+
+

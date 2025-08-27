@@ -14,6 +14,7 @@ public class CurrentUserHelper
         _sessionHelper = sessionHelper;
         _unitOfWork = unitOfWork;
     }
+    
 
     public int GetCurrentUserId()
     {

@@ -19,21 +19,37 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
     private void DetachEntity(T entity)
     {
         var entityType = typeof(T);
+        // Look for Id property (int) or any property ending with "Id" that's a Guid
         var keyProperty = entityType.GetProperties()
-            .FirstOrDefault(p => p.Name.EndsWith("Id") && p.PropertyType == typeof(Guid));
+            .FirstOrDefault(p => (p.Name == "Id" && (p.PropertyType == typeof(int) || p.PropertyType == typeof(Guid))) || 
+                                (p.Name.EndsWith("Id") && p.PropertyType == typeof(Guid)));
 
         if (keyProperty != null)
         {
-            var entityKeyVallue = keyProperty.GetValue(entity);
+            var entityKeyValue = keyProperty.GetValue(entity);
 
-            //Find and detach any existing entity with the same key
-            var existingEntry = _context.ChangeTracker.Entries<T>()
-                .FirstOrDefault(e => e.Entity != entity && 
-                keyProperty.GetValue(e.Entity)?.Equals(entityKeyVallue) == true);
-
-            if (existingEntry != null)
+            // Only detach if the key has a valid value (not 0 for int, not empty Guid)
+            bool hasValidKey = false;
+            if (keyProperty.PropertyType == typeof(int))
             {
-                _context.Entry(existingEntry.Entity).State = EntityState.Detached;
+                hasValidKey = entityKeyValue != null && (int)entityKeyValue != 0;
+            }
+            else if (keyProperty.PropertyType == typeof(Guid))
+            {
+                hasValidKey = entityKeyValue != null && (Guid)entityKeyValue != Guid.Empty;
+            }
+
+            if (hasValidKey)
+            {
+                //Find and detach any existing entity with the same key
+                var existingEntry = _context.ChangeTracker.Entries<T>()
+                    .FirstOrDefault(e => e.Entity != entity && 
+                    keyProperty.GetValue(e.Entity)?.Equals(entityKeyValue) == true);
+
+                if (existingEntry != null)
+                {
+                    _context.Entry(existingEntry.Entity).State = EntityState.Detached;
+                }
             }
         }
     }

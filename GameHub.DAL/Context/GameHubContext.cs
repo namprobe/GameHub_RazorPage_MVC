@@ -197,9 +197,9 @@ public partial class GameHubContext : DbContext
             entity.Property(e => e.PaymentDate).HasColumnType("datetime");
             entity.Property(e => e.PaymentMethod).HasMaxLength(50);
 
-            // Foreign key relationship
-            entity.HasOne(d => d.GameRegistration).WithMany()
-                .HasForeignKey(d => d.GameRegistrationId)
+            // Foreign key relationship - One GameRegistration has One Payment
+            entity.HasOne(d => d.GameRegistration).WithOne(p => p.Payment)
+                .HasForeignKey<Payment>(d => d.GameRegistrationId)
                 .HasConstraintName("FK__Payment__GameRegistrationId");
         });
 
